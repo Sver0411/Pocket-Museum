@@ -1,0 +1,1690 @@
+.native-screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+  z-index: 1;
+  isolation: isolate;
+  pointer-events: auto;
+  color-scheme: light;
+  user-select: none;
+  touch-action: none;
+}
+.native-pixels {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.25;
+  text-align: left;
+  overflow: hidden;
+  background: #fff;
+}
+.native-pixels * {
+  box-sizing: border-box;
+}
+.native-pixels button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  margin: 0;
+  cursor: pointer;
+  box-shadow: none;
+  min-width: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  touch-action: manipulation;
+}
+.native-pixels button:focus-visible {
+  outline: 2px solid #38b9e5;
+  outline-offset: -2px;
+}
+.native-pixels h2,
+.native-pixels h3,
+.native-pixels p {
+  margin: 0;
+  font-weight: normal;
+}
+.native-pixels svg {
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.native-pixels input,
+.native-pixels textarea {
+  font: inherit;
+  border: 1px solid #a3a9ac;
+  border-radius: 2px;
+  color: #353a3d;
+  background: white;
+  padding: 5px;
+  max-width: 100%;
+}
+.gb-boot {
+  position: absolute;
+  inset: 0;
+  background: #b3bf75;
+  box-shadow: inset 0 0 15px #6b7749;
+}
+.gb-cart-block {
+  position: absolute;
+  left: 32px;
+  top: 64px;
+  width: 96px;
+  height: 16px;
+  background: #20382b;
+  animation: gb-logo-drop 1s linear forwards;
+  image-rendering: pixelated;
+}
+@keyframes gb-logo-drop {
+  from {
+    transform: translateY(-100px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.gba-boot {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gba-boot span {
+  font: 900 italic 31px Arial;
+  letter-spacing: -1.5px;
+  background: linear-gradient(90deg, #1537ba, #703bba 45%, #b53cab);
+  color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 1px 0 #adc0ec);
+  animation: gba-boot-logo 1.3s ease-out both;
+}
+@keyframes gba-boot-logo {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) translateX(80px);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.ds-boot,
+.three-boot,
+.sony-boot {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: white;
+}
+.ds-boot span {
+  font: 46px Arial;
+  letter-spacing: 5px;
+  color: #353535;
+}
+.sony-boot {
+  background: #060608;
+  color: white;
+}
+.sony-boot span {
+  font: 35px Arial;
+  letter-spacing: 10px;
+}
+.sony-boot.vita span {
+  font: 56px Arial;
+  letter-spacing: 4px;
+}
+/* DS Lite firmware: each screen uses its original 256 × 192 coordinate space. */
+.ds-home-top,
+.ds-home-bottom,
+.ds-settings-top,
+.ds-settings,
+.ds-download,
+.picto-rooms,
+.picto-top,
+.picto-bottom {
+  position: absolute;
+  inset: 0;
+  background-color: #f0f1ee;
+  background-image:
+    linear-gradient(#8c979924 1px, transparent 1px),
+    linear-gradient(90deg, #8c979924 1px, transparent 1px);
+  background-size: 8px 8px;
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  color: #43484d;
+}
+.ds-status {
+  height: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+  background: linear-gradient(#a8adb0, #81898e);
+  color: white;
+  font-size: 9px;
+  white-space: nowrap;
+  border-bottom: 1px solid #5b6267;
+}
+.ds-clock-calendar {
+  display: flex;
+  gap: 12px;
+  padding: 19px 12px;
+}
+.ds-clock {
+  width: 104px;
+  height: 104px;
+}
+.ds-calendar {
+  width: 114px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 9px;
+}
+.ds-calendar b {
+  text-align: right;
+  font-weight: normal;
+}
+.ds-calendar > div {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid #717a81;
+}
+.ds-calendar strong {
+  font-size: 7px;
+  font-weight: normal;
+  color: white;
+  background: #818a91;
+  text-align: center;
+  border-right: 1px solid #b3bbc0;
+  padding: 2px 0;
+}
+.ds-calendar span {
+  height: 14px;
+  border-right: 1px solid #a8afb3;
+  border-bottom: 1px solid #a8afb3;
+  display: grid;
+  place-items: center;
+  background: #ffffff68;
+}
+.ds-calendar .today {
+  background: #a5b7cc;
+  outline: 1px solid #516273;
+  outline-offset: -1px;
+}
+.ds-menu-panels {
+  padding: 16px 16px 0;
+}
+.ds-menu-panel {
+  border: 1px solid #929b9e !important;
+  box-shadow:
+    inset 1px 1px white,
+    inset -2px -2px #c8cbcb !important;
+  background: linear-gradient(#fcfcfcaa, #d8dddeaa) !important;
+  gap: 9px;
+  font-size: 10px !important;
+}
+.ds-menu-panel.chosen {
+  outline: 1px solid #5488a6;
+  outline-offset: 2px;
+}
+.ds-card,
+.ds-gba {
+  width: 100%;
+  height: 43px;
+}
+.ds-card span,
+.ds-gba span {
+  max-width: 154px;
+  text-align: center;
+}
+.ds-middle {
+  display: flex;
+  gap: 5px;
+  margin: 7px 0;
+}
+.ds-middle > .ds-menu-panel {
+  width: 50%;
+  height: 43px;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1;
+}
+.picto-word {
+  font-size: 12px;
+  letter-spacing: -1px;
+  font-weight: normal;
+}
+.gba-cart-icon {
+  font: bold 9px Arial;
+  border: 1px solid #929a9f;
+  padding: 5px 2px;
+}
+.ds-home-bottom > footer {
+  position: absolute;
+  bottom: 4px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+.ds-home-bottom > footer button {
+  min-width: 24px;
+  height: 23px;
+}
+.ds-home-bottom > footer button:nth-child(2) {
+  border: 1px solid #838b8f;
+  background: #c2c8c9;
+  box-shadow: inset 1px 1px white;
+}
+.ds-health {
+  position: absolute;
+  inset: 0;
+  background: white;
+  color: #151515;
+  font-size: 11px;
+  padding: 25px 14px;
+  text-align: center;
+}
+.ds-health h3 {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: bold;
+  margin-bottom: 17px;
+}
+.ds-health p {
+  line-height: 1.6;
+}
+.ds-health button {
+  height: 100%;
+  width: 100%;
+  font-size: 11px;
+  animation: health-flash 2s infinite;
+}
+.ds-settings-top,
+.ds-download {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  text-align: center;
+  padding: 20px;
+}
+.ds-download h3 {
+  font-size: 18px;
+}
+.ds-download button {
+  border: 1px solid #99a1a5;
+  background: #eee;
+  padding: 4px 18px;
+}
+.native-search svg {
+  animation: search-spin 2s linear infinite;
+}
+@keyframes search-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes health-flash {
+  50% {
+    opacity: 0.45;
+  }
+}
+/* Native setting forms, with model-specific surface treatment. */
+.native-settings {
+  position: absolute;
+  inset: 0;
+  background: #f4f6f6;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  color: #343e46;
+}
+.native-settings > header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: linear-gradient(#f8fbfc, #cbdde6);
+  border-bottom: 1px solid #a0b5bf;
+  min-height: 30px;
+  flex-shrink: 0;
+}
+.native-setting-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 5px 8px;
+  scrollbar-width: thin;
+}
+.native-setting-list > button {
+  width: 100%;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 31px;
+  padding: 5px 8px;
+  border-bottom: 1px solid #b7c6cc;
+  background: linear-gradient(#fff, #e8eff3);
+  text-align: left;
+}
+.native-setting-list > button > span {
+  flex: 1;
+}
+.native-setting-list small {
+  font-size: 9px;
+  max-width: 42%;
+  text-align: right;
+}
+.native-setting-list > button.chosen {
+  background: linear-gradient(#eafcff, #bde6ed);
+  border-color: #4e9db3;
+}
+.native-settings footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-top: 1px solid #abbac1;
+  min-height: 28px;
+  flex-shrink: 0;
+}
+.native-settings footer button,
+.native-edit-actions button {
+  border: 1px solid #9aadb7;
+  background: linear-gradient(white, #dce5eb);
+  padding: 4px 18px;
+  border-radius: 4px;
+}
+.native-editor {
+  display: flex;
+  flex: 1;
+  overflow: auto;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 15px;
+}
+.native-editor > b {
+  font-size: 14px;
+  font-weight: normal;
+}
+.native-options {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex: 1;
+}
+.native-options button {
+  text-align: left;
+  justify-content: flex-start;
+  padding: 5px 10px;
+  border-bottom: 1px solid #cad2d7;
+}
+.native-options .chosen {
+  background: #caeaf4;
+}
+.native-edit-actions {
+  display: flex;
+  justify-content: space-around;
+  margin-top: auto;
+}
+.ds-settings {
+  font-size: 10px;
+}
+.ds-settings > header {
+  background: #97b6d4;
+  color: white;
+  font-size: 12px;
+  min-height: 25px;
+  padding: 3px 9px;
+}
+.ds-settings .native-setting-list > button {
+  font-family: "Courier New", monospace;
+  min-height: 30px;
+}
+.ds-settings .native-setting-list small {
+  font-size: 8px;
+}
+.ds-settings .native-editor {
+  font-size: 10px;
+  padding: 5px 12px;
+  gap: 4px;
+}
+.ds-settings .native-editor > b {
+  font-size: 11px;
+}
+.ds-settings .native-options button {
+  padding: 3px;
+}
+.ds-settings .native-edit-actions button {
+  padding: 3px 15px;
+}
+.calibration {
+  position: absolute;
+  inset: 30px 0 30px;
+  background: #f4f4f4;
+  font-size: 10px;
+  text-align: center;
+}
+.calibration button {
+  position: absolute;
+  color: #c22;
+  font-size: 24px;
+  transform: translate(-50%, -50%);
+}
+.native-dialog-shade {
+  position: absolute;
+  inset: 0;
+  background: #0005;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+}
+.native-dialog {
+  width: 85%;
+  padding: 17px 12px 9px;
+  background: linear-gradient(#fff, #e4e7e8);
+  border: 1px solid #768b94;
+  border-radius: 4px;
+  box-shadow: 0 3px 8px #0004;
+  text-align: center;
+  color: #3c454b;
+  font-size: 12px;
+}
+.native-dialog p {
+  white-space: pre-line;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+.native-dialog > div {
+  display: flex;
+  justify-content: space-evenly;
+}
+.native-dialog button {
+  min-width: 62px;
+  background: linear-gradient(#fff, #c9e1eb);
+  border: 1px solid #97aeb9;
+  padding: 5px 12px;
+  border-radius: 4px;
+}
+.picto-top header,
+.picto-bottom header {
+  height: 20px;
+  background: #c3cbd0;
+  padding: 3px 8px;
+  border-bottom: 1px solid #838d94;
+}
+.picto-top {
+  overflow-y: auto;
+}
+.picto-top p {
+  margin: 7px 8px;
+  padding: 5px 8px;
+  min-height: 25px;
+  background: #fff;
+  border: 1px solid #aeb6bb;
+  border-radius: 4px;
+  word-break: break-word;
+}
+.picto-rooms {
+  padding: 8px 17px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.picto-rooms h3 {
+  font-size: 17px;
+  text-align: center;
+}
+.picto-rooms > button {
+  border: 1px solid #8b9aa3;
+  background: #f8fbfc;
+  justify-content: space-between;
+  padding: 5px 7px;
+}
+.picto-bottom > svg {
+  height: 65px;
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid #9ca5aa;
+  display: block;
+  touch-action: none;
+}
+.picto-bottom > input {
+  width: 100%;
+  height: 20px;
+  padding: 2px 5px;
+  border-radius: 0;
+}
+.picto-keyboard {
+  padding: 3px 7px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+}
+.picto-keyboard button {
+  height: 15px;
+  width: 20px;
+  border: 1px solid #a7afb6;
+  background: linear-gradient(white, #d8e0e5);
+  font-size: 9px;
+}
+.picto-bottom footer {
+  display: flex;
+  justify-content: space-around;
+}
+.picto-bottom footer button {
+  border: 1px solid #a7afb6;
+  background: #eef2f4;
+  padding: 2px 13px;
+}
+/* Original 3DS HOME Menu (launch-era English baseline). */
+.three-home-top {
+  position: absolute;
+  inset: 0;
+  background-color: #e6ebed;
+  background-image: radial-gradient(closest-side, #fff9 80%, transparent);
+  background-size: 60px 58px;
+  background-position: 6px 15px;
+}
+.three-status {
+  height: 21px;
+  background: linear-gradient(#fff, #d7dadd);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  font-size: 10px;
+  color: #60666a;
+  border-bottom: 1px solid #c6cdcf;
+}
+.three-status > span {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.three-status > span:first-child {
+  background: linear-gradient(#eee, #ced1d2);
+  padding: 1px 6px;
+  border: 1px solid #bec3c6;
+  border-radius: 3px;
+  font-size: 9px;
+}
+.three-showcase {
+  height: 185px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  perspective: 600px;
+}
+.three-hero-icon {
+  width: 108px;
+  height: 106px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 17px;
+  background: linear-gradient(135deg, #fff, #d5dfe2);
+  box-shadow:
+    inset 2px 3px 3px #fff,
+    3px 8px 9px #7b959959;
+  animation: three-display-turn 9s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+.three-hero-icon svg {
+  filter: drop-shadow(2px 3px 1px #6c86854a);
+}
+.three-icon-shadow {
+  width: 120px;
+  height: 10px;
+  border-radius: 50%;
+  background: #8a929941;
+  filter: blur(5px);
+  margin-top: 15px;
+}
+.three-camera-hint {
+  position: absolute;
+  bottom: 5px;
+  width: 100%;
+  padding: 0 10px;
+  display: flex;
+  justify-content: space-between;
+  color: #69797e;
+  font-size: 10px;
+}
+@keyframes three-display-turn {
+  0%,
+  100% {
+    transform: rotateY(-13deg) rotateX(4deg);
+  }
+  50% {
+    transform: rotateY(14deg) rotateX(-3deg);
+  }
+}
+.three-home-bottom {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#f5f7ef, #e1e4d9);
+  font-size: 12px;
+}
+.three-toolbar {
+  height: 27px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: linear-gradient(#fffffc, #dfe3dd);
+  border-bottom: 1px solid #bac3b9;
+}
+.three-toolbar > button {
+  height: 23px;
+  width: 32px;
+  border-right: 1px solid #c9cec6;
+}
+.three-title {
+  height: 62px;
+  margin: 6px 10px 2px;
+  border: 1px solid #d9cfbb;
+  border-radius: 10px;
+  background: linear-gradient(#fffcf4, #f0f0e4);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 18px;
+  color: #6c797c;
+  font-size: 12px;
+  box-shadow:
+    inset 0 1px white,
+    0 1px 2px #8882;
+}
+.three-grid-viewport {
+  height: 113px;
+  overflow: hidden;
+  padding: 15px 20px;
+  position: relative;
+}
+.three-icon-grid {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 5px;
+  transition: transform 180ms;
+  align-items: center;
+  height: 100%;
+  width: max-content;
+}
+.three-tile {
+  width: 100%;
+  height: 100%;
+  max-height: 64px;
+  border-radius: 9px !important;
+  background: linear-gradient(#fff, #d2d6d2) !important;
+  border: 1px solid #b9c4bf !important;
+  box-shadow:
+    0 2px 2px #a8aca8,
+    inset 0 2px white !important;
+  padding: 5px !important;
+  position: relative;
+}
+.three-tile .system-icon {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--app-color);
+  border-radius: 5px;
+  color: white;
+  box-shadow: inset 0 1px 2px #fff9;
+}
+.three-tile.selected {
+  outline: 4px solid #5dd583;
+  outline-offset: 1px;
+}
+.three-tile.selected:before {
+  content: "";
+  position: absolute;
+  left: 48%;
+  top: -12px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 7px solid #49c879;
+}
+.three-grid-viewport.rows-2 {
+  padding: 8px 14px;
+}
+.three-grid-viewport.rows-3 {
+  padding: 5px 13px;
+}
+.rows-2 .three-tile {
+  border-radius: 6px !important;
+  padding: 3px !important;
+}
+.rows-3 .three-tile {
+  border-radius: 4px !important;
+  padding: 2px !important;
+}
+.rows-2 .three-tile svg {
+  width: 24px;
+  height: 24px;
+}
+.rows-3 .three-tile svg {
+  width: 20px;
+  height: 20px;
+}
+.three-home-bottom > footer {
+  height: 26px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: linear-gradient(#eff1e8, #c9d3c8);
+  border-top: 1px solid #9fae9c;
+}
+.three-home-bottom > footer > button {
+  width: 50%;
+  border-right: 1px solid #a9b8a9;
+  color: #67766c;
+  font-size: 12px;
+}
+.three-brightness {
+  position: absolute;
+  inset: 35px 20px 25px;
+  z-index: 8;
+  background: #f8faf7;
+  border: 1px solid #a6b3b7;
+  border-radius: 9px;
+  box-shadow: 0 2px 5px #0004;
+  text-align: center;
+  padding: 17px;
+}
+.three-brightness > b {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+.three-brightness > div {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 17px;
+}
+.three-brightness button {
+  background: linear-gradient(white, #dbe6e4);
+  padding: 6px 10px;
+  border: 1px solid #a8bfb7;
+  border-radius: 4px;
+}
+.three-brightness .chosen {
+  background: #a5e6c2;
+}
+.three-settings-top,
+.three-app-top {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#edf5f8, #f7fbfc);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 17px;
+  color: #6f8590;
+}
+.three-settings-top h2,
+.three-app-top h2 {
+  font-size: 20px;
+}
+.three-settings-top span {
+  position: absolute;
+  bottom: 7px;
+  right: 9px;
+  font-size: 11px;
+}
+.three-app-top {
+  color: var(--app-color);
+}
+.system-application {
+  position: absolute;
+  inset: 0;
+  background: #f0f7f9;
+  display: flex;
+  flex-direction: column;
+  color: #4a5d65;
+  font-size: 13px;
+}
+.system-application > header {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 10px;
+  background: linear-gradient(white, #c8e8ee);
+  border-bottom: 1px solid #b0ccd5;
+}
+.application-content {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 15px;
+  text-align: center;
+}
+.application-content p {
+  font-size: 12px;
+}
+.application-content h3 {
+  font-size: 14px;
+}
+.application-content button,
+.download-systems button {
+  background: linear-gradient(white, #d4e6ee);
+  padding: 5px 12px;
+  border: 1px solid #adc6d1;
+  border-radius: 4px;
+}
+.system-application > footer {
+  height: 28px;
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 12px;
+  background: #d5e8ee;
+  border-top: 1px solid #abc2ce;
+}
+.system-application > footer button {
+  padding: 2px 15px;
+  background: #f4f9fa;
+  border: 1px solid #b4cad3;
+  border-radius: 4px;
+}
+.application-content textarea {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  background: repeating-linear-gradient(white, white 19px, #d3e5ed 20px);
+  line-height: 20px;
+}
+.download-systems {
+  display: flex;
+  gap: 12px;
+}
+.native-address {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+.native-address input {
+  width: 100%;
+  min-width: 0;
+}
+.unimplemented-note {
+  font-style: italic;
+  opacity: 0.75;
+}
+/* PSP-1000 XMB, English firmware 6.61. The horizontal rail and vertical list are independent. */
+.psp-xmb {
+  position: absolute;
+  inset: 0;
+  color: #fff;
+  background: linear-gradient(160deg, #194c82, #2d80bc 55%, #156db0);
+  font-family: Arial;
+  font-size: 12px;
+  text-shadow: 0 1px 2px #0008;
+  overflow: hidden;
+}
+.psp-colour-purple {
+  background: linear-gradient(160deg, #412979, #9563bc, #523c9d);
+}
+.psp-colour-pink {
+  background: linear-gradient(160deg, #a42e68, #da77a3, #b4437a);
+}
+.psp-colour-green {
+  background: linear-gradient(160deg, #296733, #75ad5e, #3f8538);
+}
+.psp-colour-orange {
+  background: linear-gradient(160deg, #8b4c13, #d88e3a, #bd7323);
+}
+.psp-colour-silver {
+  background: linear-gradient(160deg, #484c51, #a0a7ad, #626b73);
+}
+.psp-waves {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.psp-waves i {
+  position: absolute;
+  left: -30%;
+  top: 48%;
+  height: 120px;
+  width: 160%;
+  border-top: 2px solid #c8edff44;
+  border-radius: 48% 50%;
+  box-shadow: 0 -12px 20px #9cd7fb26;
+  transform: rotate(-8deg);
+  animation: psp-wave 13s ease-in-out infinite alternate;
+}
+.psp-waves i:nth-child(2) {
+  top: 58%;
+  transform: rotate(-4deg);
+  opacity: 0.6;
+  animation-delay: -6s;
+}
+.psp-waves i:nth-child(3) {
+  top: 36%;
+  transform: rotate(-12deg);
+  opacity: 0.3;
+  animation-delay: -3s;
+}
+@keyframes psp-wave {
+  to {
+    transform: rotate(3deg) translateY(16px) scaleY(0.8);
+  }
+}
+.psp-info {
+  position: absolute;
+  right: 13px;
+  top: 12px;
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  z-index: 2;
+}
+.xmb-categories {
+  position: absolute;
+  top: 51px;
+  left: 0;
+  display: flex;
+  gap: 0;
+  transition: transform 160ms;
+  z-index: 2;
+}
+.xmb-categories > button {
+  width: 65px;
+  height: 49px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  opacity: 0.55;
+  justify-content: flex-start;
+  gap: 5px;
+}
+.xmb-categories > button span {
+  font-size: 8px;
+  width: 82px;
+  white-space: nowrap;
+  visibility: hidden;
+}
+.xmb-categories > button.selected {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px #fff8);
+}
+.xmb-categories > button.selected span {
+  visibility: visible;
+}
+.xmb-items {
+  position: absolute;
+  top: 112px;
+  left: 102px;
+  width: 290px;
+  transition: transform 150ms;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+}
+.xmb-items > button {
+  height: 36px;
+  flex-shrink: 0;
+  justify-content: flex-start;
+  gap: 14px;
+  font-size: 10px;
+  opacity: 0.5;
+  padding-left: 5px;
+}
+.xmb-items > button.selected {
+  font-size: 14px;
+  opacity: 1;
+  padding-left: 0;
+  height: 47px;
+}
+.xmb-items > button.selected svg {
+  filter: drop-shadow(0 0 4px #fff8);
+}
+.xmb-selection-glow {
+  position: absolute;
+  left: 90px;
+  top: 102px;
+  width: 310px;
+  height: 59px;
+  background: radial-gradient(ellipse at 15% 50%, #fff1, transparent 75%);
+  pointer-events: none;
+}
+.psp-xmb:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#174d8100 23%, #174d8144 36%, transparent 43%);
+  z-index: 1;
+  pointer-events: none;
+}
+.psp-settings {
+  inset: 44px 20px 24px 60px;
+  background: #132b417d;
+  color: #fff;
+  font-size: 11px;
+  text-shadow: none;
+  backdrop-filter: blur(4px);
+  border-radius: 3px;
+}
+.psp-settings > header {
+  background: #ffffff17;
+  border-bottom: 1px solid #ffffff55;
+  font-size: 12px;
+}
+.psp-settings .native-setting-list > button {
+  background: none;
+  border: 0;
+  min-height: 26px;
+  padding: 4px 9px;
+}
+.psp-settings .native-setting-list > button.chosen {
+  background: #ffffff26;
+  border-radius: 3px;
+}
+.psp-settings .native-setting-list small {
+  color: #e7edf1;
+}
+.psp-settings footer {
+  border-color: #fff4;
+  padding: 3px 8px;
+  min-height: 22px;
+}
+.psp-settings footer button {
+  border: 0;
+  background: none;
+  padding: 2px 15px;
+  font-size: 10px;
+}
+.psp-settings .native-editor {
+  font-size: 11px;
+  gap: 5px;
+  padding: 5px 10px;
+}
+.psp-settings .native-editor > b {
+  font-size: 12px;
+}
+.psp-settings .native-options button {
+  border-color: #ffffff33;
+  padding: 4px;
+}
+.psp-settings .native-options .chosen {
+  background: #ffffff22;
+}
+.psp-settings .native-edit-actions button {
+  color: #3c4d57;
+  font-size: 10px;
+  padding: 3px 20px;
+}
+.psp-empty {
+  position: absolute;
+  inset: 75px 45px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+.psp-empty h3 {
+  font-size: 16px;
+}
+.psp-empty p {
+  font-size: 11px;
+}
+.psp-empty button {
+  font-size: 10px;
+  opacity: 0.8;
+}
+.psp-nav-help {
+  position: absolute;
+  bottom: 7px;
+  right: 18px;
+  font-size: 9px;
+}
+/* Vita PCH-1000: the lock sheet, home bubbles, LiveArea gate and application index. */
+.vita-lock,
+.vita-home,
+.vita-index {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 100% 20%, #19b4df55, transparent 65%),
+    linear-gradient(130deg, #03448d, #0b70d0 70%, #45b2d0);
+  color: #fff;
+  overflow: hidden;
+}
+.vita-home:before,
+.vita-lock:before {
+  content: "";
+  position: absolute;
+  left: -30%;
+  top: 57%;
+  width: 150%;
+  height: 300px;
+  border-radius: 50%;
+  border-top: 2px solid #c4f7ff70;
+  box-shadow: 0 -25px 50px #a4eeff36;
+  transform: rotate(-14deg);
+  pointer-events: none;
+}
+.vita-info {
+  height: 36px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  padding: 3px 15px 3px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(#082d5799, #082d5722);
+  font-size: 20px;
+  z-index: 5;
+  color: white;
+  text-shadow: 0 1px 2px #0009;
+}
+.vita-info > span {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.vita-info > span:first-child {
+  font-size: 16px;
+}
+.vita-info > span > i {
+  font: 18px Arial;
+  font-style: normal;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #72c5f0;
+  background: #2676c0;
+  display: grid;
+  place-items: center;
+}
+.vita-info svg {
+  filter: drop-shadow(0 1px 1px #0005);
+}
+.vita-lock-date {
+  position: absolute;
+  left: 50px;
+  bottom: 70px;
+  display: flex;
+  flex-direction: column;
+  text-shadow: 0 2px 3px #035091;
+}
+.vita-lock-date strong {
+  font-size: 94px;
+  font-weight: 300;
+  letter-spacing: -5px;
+  line-height: 1.15;
+}
+.vita-lock-date span {
+  font-size: 24px;
+}
+.vita-peel {
+  position: absolute;
+  right: 0;
+  top: 36px;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    #eaf6ff 51%,
+    #6d99b8
+  ) !important;
+  color: #17416d !important;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  align-items: flex-start !important;
+  justify-content: flex-end !important;
+  padding: 14px !important;
+}
+.vita-page-dots {
+  position: absolute;
+  left: 22px;
+  top: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 7;
+}
+.vita-page-dots button {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff5;
+  border: 1px solid #ffffff80;
+}
+.vita-page-dots button.active {
+  background: white;
+  box-shadow: 0 0 5px #fff6;
+}
+.vita-bubbles {
+  position: absolute;
+  left: 108px;
+  right: 74px;
+  top: 59px;
+  height: 446px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: space-between;
+  justify-content: center;
+  gap: 6px 62px;
+}
+.vita-bubble {
+  width: 135px;
+  height: 139px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  flex-shrink: 0;
+}
+.vita-bubble .system-icon {
+  height: 108px;
+  width: 108px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background:
+    radial-gradient(circle at 35% 20%, #fff7, transparent 55%),
+    linear-gradient(var(--app-color), var(--app-color));
+  box-shadow:
+    inset 0 4px 4px #fff9,
+    inset -2px -4px 4px #0005,
+    0 4px 8px #002b6a88;
+  border: 1px solid #e5f8ffa0;
+  position: relative;
+}
+.vita-bubble .system-icon:after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 15%;
+  width: 70%;
+  height: 30%;
+  border-radius: 50%;
+  background: linear-gradient(#fffa, #fff0);
+  pointer-events: none;
+}
+.vita-bubble .system-icon svg {
+  filter: drop-shadow(1px 3px 1px #0004);
+}
+.vita-bubble.selected .system-icon {
+  outline: 3px solid #d7faff;
+  outline-offset: 5px;
+}
+.bubble-label {
+  font-size: 17px;
+  text-shadow: 0 1px 3px #003d73;
+  white-space: nowrap;
+  margin-top: 7px;
+}
+.vita-bubble:nth-child(4) {
+  margin-left: 85px;
+}
+.vita-bubble:nth-child(7) {
+  margin-left: 0;
+}
+.vita-bubble:nth-child(10) {
+  margin-right: 0;
+}
+.vita-home .vita-bubble {
+  height: 132px;
+}
+.vita-bubbles {
+  display: grid;
+  grid-template-columns: repeat(4, 135px);
+  grid-auto-rows: 132px;
+  gap: 18px 55px;
+  left: 128px;
+  right: auto;
+}
+.vita-bubble:nth-child(4) {
+  margin: 0;
+}
+.vita-bubble:nth-child(n + 5):nth-child(-n + 7) {
+  transform: translateX(92px);
+}
+.vita-bubble:nth-child(8) {
+  grid-column: 1;
+}
+.vita-bubble:nth-child(n + 8) {
+  transform: translateX(0);
+}
+.vita-live {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, #f1f5f6, #c7dce6);
+  color: #284852;
+}
+.vita-live > header {
+  position: absolute;
+  top: 50px;
+  left: 42px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  color: var(--app-color);
+}
+.vita-live h2 {
+  font-size: 29px;
+}
+.vita-live-close {
+  position: absolute;
+  top: 42px;
+  right: 12px;
+  font-size: 38px !important;
+  color: #4d8096 !important;
+  z-index: 8;
+  width: 50px;
+  height: 50px;
+}
+.vita-live-board {
+  position: absolute;
+  left: 70px;
+  right: 70px;
+  top: 113px;
+  bottom: 62px;
+  border-radius: 12px;
+  background: linear-gradient(130deg, #fff8, var(--app-color));
+  box-shadow:
+    inset 0 0 1px #fff,
+    0 3px 8px #376c8155;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+}
+.vita-live-art {
+  width: 240px;
+  height: 240px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--app-color);
+  box-shadow:
+    inset 2px 4px 10px #fff8,
+    2px 4px 8px #0003;
+  border-radius: 30px;
+  transform: rotate(-8deg);
+}
+.vita-start-gate {
+  width: 175px;
+  height: 205px;
+  border: 3px solid #fff !important;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start !important;
+  background: linear-gradient(#fff, #e8f2f8) !important;
+  box-shadow: 0 3px 9px #0005 !important;
+}
+.vita-start-gate > span {
+  height: 149px;
+  display: grid;
+  place-items: center;
+  color: var(--app-color);
+}
+.vita-start-gate > b {
+  width: 100%;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(#92d154, #62a735);
+  font-size: 28px;
+  color: #fff;
+  font-weight: normal;
+  border-top: 2px solid #fff;
+  text-shadow: 0 1px 2px #336b33;
+}
+.vita-back-home {
+  position: absolute;
+  bottom: 13px;
+  left: 18px;
+  width: 57px;
+  height: 37px;
+  border-radius: 50%;
+  background: #dbe9f0 !important;
+  border: 1px solid #a0becd !important;
+  color: #638fa6 !important;
+}
+.vita-index > div:last-child {
+  position: absolute;
+  top: 120px;
+  left: 70px;
+  right: 70px;
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+.vita-index > div:last-child > button {
+  width: 240px;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  border: 2px solid #fff8;
+  background: linear-gradient(130deg, #61afd4, #286699);
+  box-shadow: 0 3px 7px #002d63;
+  border-radius: 7px;
+  font-size: 21px;
+}
+.vita-index > div:last-child > button.chosen {
+  outline: 3px solid #fff;
+  outline-offset: 5px;
+}
+.vita-index-home {
+  position: absolute;
+  bottom: 15px;
+  left: 20px;
+  border: 1px solid #8fc9eb !important;
+  border-radius: 50%;
+  width: 70px;
+  height: 45px;
+}
+.vita-application {
+  position: absolute;
+  inset: 0;
+  background: #f6f8f5;
+}
+.vita-application > .vita-settings {
+  top: 36px;
+}
+.vita-settings {
+  font-size: 24px;
+  background: #ecefe9;
+  color: #405242;
+}
+.vita-settings > header {
+  height: 62px;
+  background: linear-gradient(#eff6e5, #b4d5a3);
+  font-size: 28px;
+  border-bottom: 2px solid #89b175;
+  padding: 10px 28px;
+}
+.vita-settings > header svg {
+  width: 33px;
+  height: 33px;
+}
+.vita-settings .native-setting-list {
+  padding: 12px 35px;
+}
+.vita-settings .native-setting-list > button {
+  min-height: 56px;
+  border-bottom: 1px solid #a9bfa2;
+  background: linear-gradient(#fff, #e2eada);
+  padding: 8px 15px;
+}
+.vita-settings .native-setting-list small {
+  font-size: 19px;
+}
+.vita-settings .native-setting-list > button.chosen {
+  background: linear-gradient(#e9f8e2, #bcdbaf);
+}
+.vita-settings .native-setting-list svg {
+  width: 25px;
+  height: 25px;
+}
+.vita-settings footer {
+  height: 54px;
+  padding: 6px 30px;
+  background: #c9dbbc;
+}
+.vita-settings footer button {
+  font-size: 22px;
+  padding: 5px 35px;
+}
+.vita-settings .native-editor {
+  padding: 20px 50px;
+  gap: 20px;
+  font-size: 24px;
+}
+.vita-settings .native-editor > b {
+  font-size: 28px;
+}
+.vita-settings .native-options button {
+  padding: 12px 20px;
+}
+.vita-settings .native-edit-actions button {
+  padding: 8px 45px;
+}
+.vita-settings .native-options .chosen {
+  background: #c7e5b5;
+}
+.vita-application > .system-application {
+  top: 36px;
+  font-size: 25px;
+}
+.vita-application .system-application > header {
+  height: 61px;
+  font-size: 29px;
+  padding: 10px 28px;
+}
+.vita-application .application-content {
+  gap: 26px;
+  padding: 35px 70px;
+}
+.vita-application .application-content p {
+  font-size: 23px;
+}
+.vita-application .application-content h3 {
+  font-size: 26px;
+}
+.vita-application .application-content button {
+  padding: 9px 25px;
+  font-size: 23px;
+}
+.vita-application .application-content > svg {
+  width: 92px;
+  height: 92px;
+}
+.vita-application .system-application > footer {
+  height: 53px;
+  padding: 7px 30px;
+  font-size: 23px;
+}
+.native-vita .native-dialog {
+  font-size: 23px;
+  padding: 32px 30px 20px;
+}
+.native-vita .native-dialog button {
+  padding: 9px 50px;
+}
+.native-vita .native-dialog p {
+  margin-bottom: 27px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .native-pixels * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+.vita-peel {
+  clip-path: none !important;
+  background: transparent !important;
+}
+.vita-peel:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  background: linear-gradient(135deg, transparent 50%, #eaf6ff 51%, #6d99b8);
+  pointer-events: none;
+}
+.vita-peel svg {
+  position: relative;
+  pointer-events: none;
+}
+.three-home-bottom > footer > button {
+  flex: 1;
+  width: auto;
+}
+.ds-status {
+  background: linear-gradient(
+    var(--system-accent),
+    color-mix(in srgb, var(--system-accent) 70%, #526477)
+  );
+}
+.ds-menu-panel.chosen {
+  outline-color: var(--system-accent);
+}
+.three-grid-viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+.three-grid-viewport::-webkit-scrollbar {
+  display: none;
+}
+.three-scroll-left,
+.three-scroll-right {
+  position: absolute;
+  top: 105px;
+  height: 83px;
+  width: 15px;
+  background: linear-gradient(90deg, #f0f2ea, #e3e7dd) !important;
+  z-index: 2;
+  font-size: 22px !important;
+  color: #7ea5a9 !important;
+  border: 1px solid #d1d9cb !important;
+  border-radius: 5px;
+}
+.three-scroll-left {
+  left: 0;
+}
+.three-scroll-right {
+  right: 0;
+}
+.reordering [data-app-id]{animation:home-icon-wiggle .15s ease-in-out infinite alternate;cursor:move}
+@keyframes home-icon-wiggle{from{rotate:-2deg}to{rotate:2deg}}

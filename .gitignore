@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.research/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.DS_Store
+__pycache__/
+*.pyc
+releases/*.zip
