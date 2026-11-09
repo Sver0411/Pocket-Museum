@@ -1,48 +1,48 @@
 {
   "mode": "self-contained-shell-and-system-ui",
-  "collection": "pocketsp-all.html",
+  "collection": "pocket-museum-all.html",
   "devices": [
     {
       "id": "gb",
       "name": "Game Boy",
       "file": "gb.html",
-      "bytes": 2983940
+      "bytes": 2983980
     },
     {
       "id": "gba",
       "name": "Game Boy Advance",
       "file": "gba.html",
-      "bytes": 3680716
+      "bytes": 3680756
     },
     {
       "id": "sp",
       "name": "Game Boy Advance SP",
       "file": "sp.html",
-      "bytes": 5894224
+      "bytes": 5894264
     },
     {
       "id": "ds",
       "name": "Nintendo DS Lite",
       "file": "ds.html",
-      "bytes": 5506844
+      "bytes": 5506884
     },
     {
       "id": "3ds",
       "name": "Nintendo 3DS",
       "file": "3ds.html",
-      "bytes": 6385139
+      "bytes": 6385179
     },
     {
       "id": "psp",
       "name": "PlayStation Portable",
       "file": "psp.html",
-      "bytes": 3112800
+      "bytes": 3112840
     },
     {
       "id": "vita",
       "name": "PlayStation Vita",
       "file": "vita.html",
-      "bytes": 2987572
+      "bytes": 2987612
     }
   ]
 }

@@ -16,6 +16,10 @@ test("all seven handhelds switch inside one document and retain a unified UI", a
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
+  await expect(page).toHaveTitle("Pocket Museum — 口袋掌机博物馆");
+  await expect(
+    page.getByRole("link", { name: "Pocket Museum 首页" }),
+  ).toContainText("Pocket Museum");
   const original = page.url();
   for (const [id, label] of devices) {
     await page
@@ -77,6 +81,7 @@ test("single-device HTML files and the combined HTML open offline with no extern
     await page.goto(
       pathToFileURL(resolve(`public/standalone/${id}.html`)).href,
     );
+    await expect(page).toHaveTitle(/Pocket Museum 单文件版/);
     await expect(page.locator(".console-space")).toHaveAttribute(
       "data-device",
       id,
@@ -116,8 +121,9 @@ test("single-device HTML files and the combined HTML open offline with no extern
     }
   }
   await page.goto(
-    pathToFileURL(resolve("public/standalone/pocketsp-all.html")).href,
+    pathToFileURL(resolve("public/standalone/pocket-museum-all.html")).href,
   );
+  await expect(page).toHaveTitle("Pocket Museum · 全掌机单文件版");
   for (const [id, label] of devices) {
     await page
       .getByRole("navigation", { name: "切换掌机" })
@@ -406,7 +412,7 @@ test("physical utility keys control volume, lighting and native Home screens", a
     await page.waitForTimeout(850);
     await page.getByRole("button", { name: "掌机 Home", exact: true }).click();
     await expect(
-      page.getByRole("dialog", { name: "PocketSP 使用指南" }),
+      page.getByRole("dialog", { name: "Pocket Museum 使用指南" }),
     ).toHaveCount(0);
     await expect(page.getByTestId("native-screen-0")).toHaveAttribute(
       "data-system-phase",

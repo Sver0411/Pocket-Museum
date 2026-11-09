@@ -1223,7 +1223,7 @@ export function ContentApp(props: AppProps) {
                   url = URL.createObjectURL(blob),
                   a = document.createElement("a");
                 a.href = url;
-                a.download = "pocketsp-content-index.json";
+                a.download = "pocket-museum-content-index.json";
                 a.click();
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
                 setMessage("Content list exported.");

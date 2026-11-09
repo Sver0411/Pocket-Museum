@@ -1,4 +1,8 @@
-# PocketSP
+# Pocket Museum
+
+口袋掌机博物馆。
+
+[GitHub 源码](https://github.com/Sver0411/Pocket-Museum) · [下载工程与离线 HTML](https://github.com/Sver0411/Pocket-Museum/releases/tag/v0.1.1)
 
 React + TypeScript + Vite 掌机界面项目。统一的深色展示环境、写实机身、空白关机屏幕，顶部在 **Game Boy、GBA、GBA SP、DS、3DS、PSP、PS Vita** 之间切换，始终保留在同一个 HTML 文档。
 
@@ -37,7 +41,7 @@ Playwright 配置使用 `channel: 'chrome'`。若没有 Chrome，可先安装 Ch
 
 | 文件 | 内容 |
 | --- | --- |
-| [public/standalone/pocketsp-all.html](public/standalone/pocketsp-all.html) | 七台掌机的整合单文件，顶部切换 |
+| [public/standalone/pocket-museum-all.html](public/standalone/pocket-museum-all.html) | 七台掌机的整合单文件，顶部切换 |
 | [public/standalone/gb.html](public/standalone/gb.html) | Game Boy |
 | [public/standalone/gba.html](public/standalone/gba.html) | Game Boy Advance |
 | [public/standalone/sp.html](public/standalone/sp.html) | Game Boy Advance SP |
@@ -56,7 +60,7 @@ Playwright 配置使用 `channel: 'chrome'`。若没有 Chrome，可先安装 Ch
 npm run build:standalone
 ```
 
-主页面底部的“单文件版”可以下载当前机型。直接通过开发服务器访问 `/standalone/pocketsp-all.html` 可预览整合版。
+主页面底部的“单文件版”可以下载当前机型。直接通过开发服务器访问 `/standalone/pocket-museum-all.html` 可预览整合版。
 
 ## 交互
 
@@ -116,6 +120,8 @@ public/licenses/                   第三方许可和源代码快照
 
 主界面与 iframe 的消息包含 `channel: pocketsp:v1`、随机 session、请求 ID。两端核验 origin、source、session、命令类型和二进制大小；没有执行任意脚本或从外部 URL 加载用户 ROM 的命令。输入最终调用真实 `gameManager.simulateInput`，并关闭 iframe 自己的手柄轮询，避免双重输入。
 
+内部数据库与通信标识沿用旧版本的命名，以兼容已有卡带、设置和存档。
+
 ## 素材、参考及剩余事项
 
 机身采用生成的写实透明素材，并叠加真实 DOM 屏幕、命中区、按压图层和 CSS 翻盖；这是按后续“写实质感”要求采用的混合方案。显示层轻微平滑高频颗粒，保留轮廓和接缝。素材和完整提示词记录见 [docs/design/ASSETS.md](docs/design/ASSETS.md)。
@@ -139,4 +145,4 @@ DS 的健康提示、时钟日历、菜单、PictoChat 本地输入、Download P
 
 `npm run build` 后可运行 `python3 scripts/package-html-release.py` 更新八个离线 HTML 的 ZIP、说明及 SHA-256 校验文件。图片、录音、Mii 和笔记仍仅保存于当前浏览器；不同浏览器及 file:// 文件未必共享同一存储。
 
-`releases/pocketsp-html.zip` 为八个自包含 HTML 及说明截图；`releases/pocketsp-source.zip` 为完整可运行工程，解压后进入 PocketSP 文件夹运行 `npm install`、`npm run dev`。两者的校验值记录在 `releases/SHA256SUMS`。
+`releases/pocket-museum-html.zip` 为八个自包含 HTML 及说明截图；`releases/pocket-museum-source.zip` 为完整可运行工程，解压后进入 PocketMuseum 文件夹运行 `npm install`、`npm run dev`。两者的校验值记录在 `releases/SHA256SUMS`。

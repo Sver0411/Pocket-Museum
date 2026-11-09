@@ -1,6 +1,6 @@
-# PocketSP — third-party notices
+# Pocket Museum — third-party notices
 
-PocketSP is an independent browser project. Hardware model names are descriptive. The seven angled device cutouts and three independent orthographic flat views in `/assets/` were generated with the built-in imagegen tool for this project; prompt and provenance notes are in `docs/design/ASSETS.md` and `docs/design/FLAT_PROMPTS.md`. The device UI does not render the Nintendo wordmark or oval logo. Official hardware photographs are used for research only and are not bundled as UI assets. No commercial game or Nintendo BIOS is included.
+Pocket Museum is an independent browser project. Hardware model names are descriptive. The seven angled device cutouts and three independent orthographic flat views in `/assets/` were generated with the built-in imagegen tool for this project; prompt and provenance notes are in `docs/design/ASSETS.md` and `docs/design/FLAT_PROMPTS.md`. The device UI does not render the Nintendo wordmark or oval logo. Official hardware photographs are used for research only and are not bundled as UI assets. No commercial game or Nintendo BIOS is included.
 
 ## EmulatorJS 4.2.3
 

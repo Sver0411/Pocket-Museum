@@ -135,7 +135,7 @@ export const SETTINGS: Record<string, Setting[]> = {
     { key: "format", label: "Format Memory Stick™", values: ["Format"] },
     { key: "wma", label: "Enable WMA Playback", values: ["Off", "On"] },
     { key: "flash", label: "Enable Flash® Player", values: ["Off", "On"] },
-    { key: "nickname", label: "Nickname", values: ["Player", "PocketSP"] },
+    { key: "nickname", label: "Nickname", values: ["Player", "Pocket"] },
     {
       key: "language",
       label: "System Language",
@@ -473,7 +473,7 @@ export const DS_SETTINGS: Record<string, Setting[]> = {
       ],
     },
     { key: "birthday", label: "Birthday", values: ["01/01", "06/15", "12/25"] },
-    { key: "nickname", label: "User Name", values: ["Player", "PocketSP"] },
+    { key: "nickname", label: "User Name", values: ["Player", "Pocket"] },
     { key: "message", label: "Message", values: ["Hello!", "Let’s play!"] },
   ],
 };
@@ -504,7 +504,7 @@ export const THREE_SETTINGS: Record<string, Setting[]> = {
     { key: "dsiware", label: "DSiWare", values: ["No software data."] },
   ],
   "Other Settings": [
-    { key: "nickname", label: "Profile", values: ["Player", "PocketSP"] },
+    { key: "nickname", label: "Profile", values: ["Player", "Pocket"] },
     { key: "date", label: "Date & Time", values: ["Set Date and Time"] },
     {
       key: "brightness",

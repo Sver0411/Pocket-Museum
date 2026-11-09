@@ -478,7 +478,7 @@ export default function App() {
         <a
           href={STANDALONE ? undefined : "/"}
           className="studio-brand"
-          aria-label="PocketSP 首页"
+          aria-label="Pocket Museum 首页"
         >
           <svg
             width="35"
@@ -519,7 +519,7 @@ export default function App() {
                 device.label
               ) : (
                 <>
-                  Pocket<span>SP</span>
+                  Pocket <span>Museum</span>
                 </>
               )}
             </b>
@@ -999,7 +999,7 @@ export default function App() {
           <section
             role="dialog"
             aria-modal="true"
-            aria-label="PocketSP 使用指南"
+            aria-label="Pocket Museum 使用指南"
             className="help-modal"
             tabIndex={-1}
             onClick={(e) => e.stopPropagation()}

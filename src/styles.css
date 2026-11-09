@@ -115,6 +115,7 @@ button svg {
   gap: 7px;
 }
 .studio-brand b {
+  white-space: nowrap;
   font-size: 30px;
   letter-spacing: -1.1px;
   font-weight: 650;

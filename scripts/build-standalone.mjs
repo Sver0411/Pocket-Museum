@@ -5,7 +5,7 @@ const result = await build({
   entryPoints: ["src/main.tsx"],
   bundle: true,
   write: false,
-  outfile: "pocketsp.js",
+  outfile: "pocket-museum.js",
   format: "iife",
   minify: true,
   target: "es2022",
@@ -46,7 +46,7 @@ for (const device of DEVICES) {
       JSON.stringify("data:image/png;base64," + flatImage.toString("base64")),
     );
   }
-  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>${device.name} · PocketSP 单文件版</title><style>${css}</style></head><body><div id="root"></div><script>window.__POCKETSP_STANDALONE__=true;window.__POCKETSP_DEVICE__=${JSON.stringify(device.id)};</script><script>${code}</script></body></html>`;
+  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>${device.name} · Pocket Museum 单文件版</title><style>${css}</style></head><body><div id="root"></div><script>window.__POCKETSP_STANDALONE__=true;window.__POCKETSP_DEVICE__=${JSON.stringify(device.id)};</script><script>${code}</script></body></html>`;
   const file = "public/standalone/" + device.id + ".html";
   await writeFile(file, html);
   outputs.push({
@@ -74,15 +74,15 @@ for (const device of DEVICES) {
 }
 collectionCode = collectionCode.replace(/<\/script/gi, "<\\/script");
 await writeFile(
-  "public/standalone/pocketsp-all.html",
-  `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PocketSP · 全掌机单文件版</title><style>${css}</style></head><body><div id="root"></div><script>window.__POCKETSP_STANDALONE__=true;window.__POCKETSP_COLLECTION__=true;window.__POCKETSP_DEVICE__="sp";</script><script>${collectionCode}</script></body></html>`,
+  "public/standalone/pocket-museum-all.html",
+  `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pocket Museum · 全掌机单文件版</title><style>${css}</style></head><body><div id="root"></div><script>window.__POCKETSP_STANDALONE__=true;window.__POCKETSP_COLLECTION__=true;window.__POCKETSP_DEVICE__="sp";</script><script>${collectionCode}</script></body></html>`,
 );
 await writeFile(
   "public/standalone/index.json",
   JSON.stringify(
     {
       mode: "self-contained-shell-and-system-ui",
-      collection: "pocketsp-all.html",
+      collection: "pocket-museum-all.html",
       devices: outputs,
     },
     null,
