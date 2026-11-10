@@ -1,3 +1,4 @@
+import { audioManager } from "../audio/AudioManager";
 import { useEffect, useReducer, useRef } from "react";
 import type { DeviceId } from "../devices";
 import type { Button } from "../emulator/protocol";
@@ -11,7 +12,22 @@ export function useNativeSystem(
   powered: boolean,
   suspended: boolean,
 ) {
-  const [state, dispatch] = useReducer(systemReducer, device, initialSystem);
+  const [state, rawDispatch] = useReducer(systemReducer, device, initialSystem);
+  const dispatch: typeof rawDispatch = (action) => {
+    if (powered && !suspended) {
+      const cue = ["select", "category", "page"].includes(action.type)
+        ? "move"
+        : ["open", "start", "commit", "section"].includes(action.type)
+          ? "confirm"
+          : ["back", "cancel-edit", "home", "close"].includes(action.type)
+            ? "back"
+            : action.type === "dialog"
+              ? "warning"
+              : null;
+      if (cue) void audioManager.play(cue);
+    }
+    rawDispatch(action);
+  };
   const held = useRef(new Map<Button, ReturnType<typeof setTimeout>>());
   const ready = useRef(false);
   const current = useRef(state);
@@ -31,7 +47,10 @@ export function useNativeSystem(
           ".native-screen audio,.native-screen video",
         )
         .forEach((el) => el.pause());
-    }
+    } else
+      window.dispatchEvent(
+        new CustomEvent("pocketsp:system-resume", { detail: device }),
+      );
   }, [device, powered, suspended]);
   useEffect(() => {
     if (
@@ -44,22 +63,38 @@ export function useNativeSystem(
   useEffect(() => {
     const id = state.prefs.deleteMedia;
     if (!id || state.device !== device) return;
-    void storage.deleteMedia(id).then(() => {
-      notifyMedia();
-      dispatch({ type: "set", key: "deleteMedia", value: "" });
-    });
+    void storage
+      .deleteMedia(id)
+      .then(() => {
+        notifyMedia();
+        dispatch({ type: "set", key: "deleteMedia", value: "" });
+      })
+      .catch((e) => {
+        dispatch({ type: "set", key: "deleteMedia", value: "" });
+        dispatch({ type: "dialog", text: String(e) });
+      });
   }, [state.prefs.deleteMedia, state.device, device]);
   useEffect(() => {
     if (!state.prefs.eraseMedia || state.device !== device) return;
-    void storage.clearMedia(device).then(() => {
-      notifyMedia();
-      dispatch({ type: "set", key: "eraseMedia", value: "" });
-    });
+    void storage
+      .clearMedia(device)
+      .then(() => {
+        notifyMedia();
+        dispatch({ type: "set", key: "eraseMedia", value: "" });
+      })
+      .catch((e) => {
+        dispatch({ type: "set", key: "eraseMedia", value: "" });
+        dispatch({ type: "dialog", text: String(e) });
+      });
   }, [state.prefs.eraseMedia, state.device, device]);
   useEffect(() => {
     if (!powered || suspended || state.phase !== "app") return;
     let previous = Date.now();
     const timer = setInterval(() => {
+      if (document.hidden) {
+        previous = Date.now();
+        return;
+      }
       const now = Date.now(),
         delta = Math.round((now - previous) / 1000);
       previous = now;
@@ -108,6 +143,7 @@ export function useNativeSystem(
   useEffect(() => {
     dispatch({ type: "power", device, on: powered });
     if (!powered) return;
+    void audioManager.play("boot");
     const t = setTimeout(
       () => dispatch({ type: "ready" }),
       device === "gb" ? 1000 : device === "gba" || device === "sp" ? 1800 : 700,
@@ -142,6 +178,15 @@ export function useNativeSystem(
     held.current.delete(b);
     if (!powered || suspended || !down) return;
     const press = () => {
+      void audioManager.play(
+        ["Up", "Down", "Left", "Right"].includes(b)
+          ? "move"
+          : b === "B"
+            ? "back"
+            : b === "A"
+              ? "confirm"
+              : "press",
+      );
       const event = new CustomEvent("pocketsp:app-button", {
         detail: { device, button: b },
         cancelable: true,

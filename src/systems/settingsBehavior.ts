@@ -70,7 +70,11 @@ export function commitPreference(
       )
         return { ...s, dialog: "Enter a valid date." };
       target.setFullYear(y, month - 1, day);
-      if (m[4]) target.setHours(+m[4], +m[5], 0, 0);
+      if (m[4]) {
+        if (+m[4] > 23 || +m[5] > 59)
+          return { ...s, dialog: "Enter a valid time." };
+        target.setHours(+m[4], +m[5], 0, 0);
+      }
     }
     prefs.clockOffset = String(
       Number(prefs.clockOffset || 0) + target.getTime() - current.getTime(),

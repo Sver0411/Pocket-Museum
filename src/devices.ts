@@ -20,6 +20,13 @@ export interface DeviceDefinition {
   width: number;
   height: number;
   landscape?: boolean;
+  viewport?: Rect;
+  sliders?: (Rect & {
+    id: "volume" | "contrast" | "depth";
+    label: string;
+    vertical?: boolean;
+    lid?: boolean;
+  })[];
   lid?: Rect;
   folded?: Rect;
   sleepOnClose?: boolean;
@@ -38,7 +45,7 @@ export interface DeviceDefinition {
   utilityKeys?: (Rect & {
     id: string;
     label: string;
-    action: "menu" | "volume-up" | "volume-down" | "mute" | "light";
+    action: "menu" | "volume-up" | "volume-down" | "sound" | "light";
     round?: boolean;
   })[];
 }
@@ -125,12 +132,24 @@ export const DEVICES: DeviceDefinition[] = [
     folded: { x: 28, y: 665, w: 1242, h: 440 },
     sleepOnClose: true,
     screens: [
-      { x: 372, y: 128, w: 553, h: 391, lid: true },
+      {
+        x: 372,
+        y: 128,
+        w: 553,
+        h: 414.75,
+        lid: true,
+        quad: [
+          [372, 128],
+          [925, 128],
+          [925, 519],
+          [372, 519],
+        ],
+      },
       {
         x: 379,
         y: 720,
         w: 530,
-        h: 280,
+        h: 397.5,
         quad: [
           [378, 720],
           [908, 720],
@@ -171,7 +190,7 @@ export const DEVICES: DeviceDefinition[] = [
         x: 365,
         y: 708,
         w: 585,
-        h: 280,
+        h: 438.75,
         quad: [
           [366, 708],
           [945, 708],
@@ -296,8 +315,8 @@ DEVICES.find((d) => d.id === "psp")!.utilityKeys = [
   },
   {
     id: "sound",
-    label: "静音",
-    action: "mute",
+    label: "SOUND",
+    action: "sound",
     x: 1136,
     y: 733,
     w: 65,
@@ -320,6 +339,78 @@ DEVICES.find((d) => d.id === "vita")!.utilityKeys = [
 DEVICES.find((d) => d.id === "3ds")!.utilityKeys = [
   { id: "home", label: "Home", action: "menu", x: 549, y: 1034, w: 220, h: 47 },
 ];
+const viewports: Partial<Record<DeviceId, Rect>> = {
+  gb: { x: 215, y: 18, w: 780, h: 1272 },
+  gba: { x: 28, y: 10, w: 1720, h: 860 },
+  sp: { x: 170, y: 60, w: 860, h: 1220 },
+  ds: { x: 25, y: 25, w: 1250, h: 1165 },
+  "3ds": { x: 10, y: 18, w: 1290, h: 1165 },
+  psp: { x: 25, y: 50, w: 1725, h: 760 },
+  vita: { x: 22, y: 25, w: 1730, h: 815 },
+};
+for (const d of DEVICES) d.viewport = viewports[d.id];
+deviceMutable("gba").powerKey = { x: 1655, y: 205, w: 50, h: 105 };
+deviceMutable("psp").powerKey = { x: 1695, y: 505, w: 45, h: 105 };
+deviceMutable("ds").powerKey = { x: 1228, y: 800, w: 40, h: 95 };
+deviceMutable("ds").sliders = [
+  { id: "volume", label: "掌机音量", x: 154, y: 1133, w: 110, h: 38 },
+];
+deviceMutable("gb").sliders = [
+  {
+    id: "contrast",
+    label: "LCD 对比度",
+    x: 214,
+    y: 374,
+    w: 24,
+    h: 130,
+    vertical: true,
+  },
+];
+deviceMutable("3ds").sliders = [
+  {
+    id: "depth",
+    label: "3D 深度",
+    x: 1221,
+    y: 383,
+    w: 28,
+    h: 150,
+    vertical: true,
+    lid: true,
+  },
+  {
+    id: "volume",
+    label: "掌机音量",
+    x: 45,
+    y: 726,
+    w: 24,
+    h: 120,
+    vertical: true,
+  },
+];
+deviceMutable("vita").powerKey = { x: 370, y: 24, w: 95, h: 30 };
+deviceMutable("vita").utilityKeys!.push(
+  {
+    id: "volume-down",
+    label: "音量减",
+    action: "volume-down",
+    x: 1190,
+    y: 24,
+    w: 76,
+    h: 30,
+  },
+  {
+    id: "volume-up",
+    label: "音量加",
+    action: "volume-up",
+    x: 1270,
+    y: 24,
+    w: 76,
+    h: 30,
+  },
+);
+function deviceMutable(id: DeviceId) {
+  return DEVICES.find((d) => d.id === id)!;
+}
 DEVICES.sort(
   (a, b) =>
     ["gb", "gba", "sp", "ds", "3ds", "psp", "vita"].indexOf(a.id) -

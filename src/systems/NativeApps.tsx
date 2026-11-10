@@ -1,3 +1,5 @@
+import { audioManager } from "../audio/AudioManager";
+import type { SoundPreset } from "../audio/AudioManager";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, Dispatch } from "react";
 import {
@@ -43,6 +45,7 @@ export interface AppProps {
   dispatch: Dispatch<NativeAction>;
   top: boolean;
   volume?: number;
+  headphones?: boolean;
 }
 function json<T>(value: string | undefined, fallback: T): T {
   try {
@@ -498,7 +501,7 @@ export function PlazaApp(props: AppProps) {
           onClick={() =>
             props.dispatch({
               type: "dialog",
-              text: "StreetPass is enabled for Mii Plaza.",
+              text: "StreetPass wireless communication is unavailable in this browser.",
             })
           }
         >
@@ -547,6 +550,28 @@ export function MediaApp(
         s.prefs.avls === "On" ? 0.6 : 1,
       );
   }, [props.volume, s.prefs.avls, selected]);
+  useEffect(() => {
+    if (player.current && kind === "audio" && s.device === "psp" && !props.top)
+      return audioManager.attachMedia(
+        player.current,
+        props.headphones
+          ? ((s.prefs["sound-preset"] ?? "OFF") as SoundPreset)
+          : "OFF",
+      );
+  }, [
+    selected,
+    kind,
+    s.device,
+    props.top,
+    props.headphones,
+    s.prefs["sound-preset"],
+  ]);
+  useEffect(() => {
+    const el = player.current;
+    return () => {
+      el?.pause();
+    };
+  }, [selected?.id]);
   const name =
     kind === "image"
       ? "Photos"
@@ -903,6 +928,12 @@ export function Recorder(props: AppProps) {
         1000,
       );
     } catch (e) {
+      if (token === generation.current) {
+        stream.current?.getTracks().forEach((t) => t.stop());
+        stream.current = null;
+        recorder.current = null;
+        if (timer.current) clearInterval(timer.current);
+      }
       if (alive.current && token === generation.current)
         setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -944,14 +975,10 @@ export function NotebookApp(props: AppProps) {
         <h2>Game Notes</h2>
         <div>
           {Array.from({ length: 16 }, (_, i) => (
-            <button
-              key={i}
-              className={i === page ? "chosen" : ""}
-              onClick={() => pref(props, "note-page", String(i))}
-            >
+            <span key={i} className={i === page ? "chosen" : ""}>
               {i + 1}
               {notes[i]?.text ? " ✎" : ""}
-            </button>
+            </span>
           ))}
         </div>
       </div>
@@ -962,6 +989,20 @@ export function NotebookApp(props: AppProps) {
       title={`Game Notes　${page + 1}/16`}
       theme="notes-app"
     >
+      <label className="notes-page-picker">
+        Page{" "}
+        <select
+          aria-label="Game Notes page"
+          value={page}
+          onChange={(e) => pref(props, "note-page", e.target.value)}
+        >
+          {Array.from({ length: 16 }, (_, i) => (
+            <option key={i} value={i}>
+              {i + 1}
+            </option>
+          ))}
+        </select>
+      </label>
       <textarea
         aria-label="Game Notes text"
         value={note.text}

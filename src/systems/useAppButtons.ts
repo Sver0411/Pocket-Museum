@@ -36,6 +36,45 @@ export function useAppButtons(
       }
       const direction = e.detail.button;
       if (!["Up", "Down", "Left", "Right"].includes(direction)) return;
+      if (
+        current instanceof HTMLInputElement &&
+        current.type === "range" &&
+        ["Left", "Right"].includes(direction)
+      ) {
+        const setter = Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          "value",
+        )!.set!;
+        setter.call(
+          current,
+          String(
+            Math.min(
+              Number(current.max || 100),
+              Math.max(
+                Number(current.min || 0),
+                Number(current.value) +
+                  (direction === "Right" ? 1 : -1) * Number(current.step || 1),
+              ),
+            ),
+          ),
+        );
+        current.dispatchEvent(new Event("input", { bubbles: true }));
+        current.dispatchEvent(new Event("change", { bubbles: true }));
+        e.preventDefault();
+        return;
+      }
+      if (
+        current instanceof HTMLSelectElement &&
+        ["Left", "Right"].includes(direction)
+      ) {
+        current.selectedIndex = Math.min(
+          current.options.length - 1,
+          Math.max(0, current.selectedIndex + (direction === "Right" ? 1 : -1)),
+        );
+        current.dispatchEvent(new Event("change", { bubbles: true }));
+        e.preventDefault();
+        return;
+      }
       const r = current.getBoundingClientRect(),
         cx = r.x + r.width / 2,
         cy = r.y + r.height / 2;

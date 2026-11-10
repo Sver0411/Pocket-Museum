@@ -1,0 +1,38 @@
+{
+  "public/audio/menu-loop.wav": {
+    "url": "https://opengameart.org/sites/default/files/Loop-Menu.wav",
+    "sha256": "92537b47f9d970da529c0818052e7d900625c54247d410bdb0b04c15aadd6f7e"
+  },
+  "public/licenses/BlocksDS-picolibc-COPYING.txt": {
+    "url": "https://raw.githubusercontent.com/WonderfulToolchain/wf-picolibc/wonderful/COPYING.picolibc",
+    "sha256": "8144050bf95453ae1e74edb7fd5a1ebc7175ee344b59fcdfb991c84e9190494d"
+  },
+  "public/licenses/BlocksDS-Maxmod-ISC.txt": {
+    "url": "https://raw.githubusercontent.com/blocksds/maxmod/master/COPYING",
+    "sha256": "21afef4375bfc4196ba96200837e60bf99b32afc0e89bae1210e5987b8bdd28a"
+  },
+  "public/licenses/BlocksDS-DSWifi-COPYING.txt": {
+    "url": "https://raw.githubusercontent.com/blocksds/dswifi/master/COPYING",
+    "sha256": "c5d1023c05eeb22cc87fe645d7f88e393004587fcc5d490b120a31bae413d276"
+  },
+  "public/licenses/BlocksDS-DSWifi-COPYING.lwip.txt": {
+    "url": "https://raw.githubusercontent.com/blocksds/dswifi/master/COPYING.lwip",
+    "sha256": "bc13ef107e0287ddb92d0e3e4b87906dd7dc4b6779a1d93cf96859954c9274b8"
+  },
+  "public/licenses/BlocksDS-DSWifi-COPYING.mbedtls.txt": {
+    "url": "https://raw.githubusercontent.com/blocksds/dswifi/master/COPYING.mbedtls",
+    "sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b"
+  },
+  "public/licenses/GCC-Runtime-Exception.txt": {
+    "url": "https://raw.githubusercontent.com/gcc-mirror/gcc/master/COPYING.RUNTIME",
+    "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74"
+  },
+  "public/licenses/BlocksDS-libnds-LICENSE": {
+    "url": "https://raw.githubusercontent.com/blocksds/libnds/master/licenses/LICENSE",
+    "sha256": "55f0918e6e76092838c08a37da957a4ad760f814573b4c73235c994002087f79"
+  },
+  "public/licenses/BlocksDS-libnds-LICENSE.FatFs": {
+    "url": "https://raw.githubusercontent.com/blocksds/libnds/master/licenses/LICENSE.FatFs",
+    "sha256": "b896e32fb2cdb3fc8b3b6fd854706fca4ac55619fbb6d5eb2429cb05ee338966"
+  }
+}

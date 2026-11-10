@@ -1,7 +1,9 @@
+import { DsGameScreen } from "./DsGameScreen";
 import { useEffect, useRef, useState } from "react";
 import { projectiveMatrix, scaledQuad } from "./projection";
 import { presentationDevice } from "../flatDevices";
 import type { Quad } from "./projection";
+import { HardwareSlider } from "./HardwareSlider";
 import { LidCover } from "./LidCover";
 import { buttonArt } from "./controlArt";
 import { Key, percentRect } from "./HardwareKey";
@@ -32,9 +34,12 @@ interface Props {
   onLidMotion: () => void;
   onMenu: () => void;
   onVolume: (delta: number) => void;
-  onMute: () => void;
+  onSound: (long: boolean) => void;
+  hardwareValues: Record<string, number>;
+  onHardwareValue: (id: string, value: number) => void;
   session: string;
   onFrame: (frame: HTMLIFrameElement) => void;
+  onTouch: (x: number, y: number, down: boolean) => void;
 }
 export function Console({
   device: sourceDevice,
@@ -51,9 +56,12 @@ export function Console({
   onLidMotion,
   onMenu,
   onVolume,
-  onMute,
+  onSound,
+  hardwareValues,
+  onHardwareValue,
   session,
   onFrame,
+  onTouch,
   emulate = true,
   nativeScreen,
   cancelToken = "",
@@ -61,6 +69,7 @@ export function Console({
   // Flat play has its own photograph and coordinates; the original perspective is never warped.
   const d = presentationDevice(sourceDevice, flat);
   const stage = useRef<HTMLDivElement>(null);
+  const dsFrame = useRef<HTMLIFrameElement>(null);
   const [stageWidth, setStageWidth] = useState(d.width);
   useEffect(() => {
     if (!stage.current) return;
@@ -71,6 +80,8 @@ export function Console({
     return () => observer.disconnect();
   }, []);
   const isFlat = flat && !closed;
+  const view = d.viewport ?? { x: 0, y: 0, w: d.width, h: d.height };
+  const photoScale = stageWidth / view.w;
   const [drag, setDrag] = useState<number | null>(null),
     [moving, setMoving] = useState(false);
   const gesture = useRef<{
@@ -112,6 +123,7 @@ export function Console({
     return (
       <div
         key={index}
+        inert={lid && ["ds", "3ds"].includes(d.id)}
         className={`lcd ${light ? "" : "dim"} ${powered ? "screen-powered" : ""}`}
         style={{
           ...percentRect(
@@ -120,6 +132,10 @@ export function Console({
             lid ? d.lid!.h : d.height,
           ),
           transformOrigin: "0 0",
+          filter:
+            d.id === "gb"
+              ? `contrast(${0.35 + (hardwareValues.contrast ?? 65) / 50})`
+              : undefined,
           ...(r.quad
             ? {
                 transform: `matrix3d(${projectiveMatrix(
@@ -130,32 +146,40 @@ export function Console({
                       [r.w, r.h],
                       [0, r.h],
                     ],
-                    stageWidth / d.width,
+                    photoScale,
                   ),
                   scaledQuad(
                     r.quad.map(([x, y]) => [
                       x - r.x,
                       y - r.y,
                     ]) as unknown as Quad,
-                    stageWidth / d.width,
+                    photoScale,
                   ),
                 ).join(",")})`,
               }
             : {}),
         }}
       >
-        {powered && ["sp", "gba"].includes(d.id) && emulate && (
+        {powered && ["sp", "gba", "gb"].includes(d.id) && emulate && (
           <iframe
             key={session}
-            title="GBA 游戏画面"
+            title={d.id === "gb" ? "GB 游戏画面" : "GBA 游戏画面"}
             src={`/emulator.html?session=${session}`}
             onLoad={(e) => onFrame(e.currentTarget)}
             tabIndex={-1}
             allow="autoplay; gamepad"
           />
         )}
+        {powered && d.id === "ds" && emulate && (
+          <DsGameScreen
+            frame={dsFrame}
+            index={lid ? 0 : 1}
+            active={status === "running" && !closed}
+            onTouch={onTouch}
+          />
+        )}
         {powered &&
-          !(["sp", "gba"].includes(d.id) && emulate) &&
+          !(["sp", "gba", "gb", "ds"].includes(d.id) && emulate) &&
           nativeScreen?.(d.screens.indexOf(r as (typeof d.screens)[number]))}
         {status === "off" && (
           <div className="screen-idle" aria-label="掌机屏幕已关闭" />
@@ -163,7 +187,7 @@ export function Console({
         {status === "loading" && emulate && (
           <div className="screen-overlay">
             <LoaderCircle className="spin" size={20} />
-            <span>正在启动 mGBA…</span>
+            <span>正在启动 {d.id === "ds" ? "DeSmuME" : "mGBA"}…</span>
           </div>
         )}
         {status === "paused" && !closed && (
@@ -208,7 +232,8 @@ export function Console({
             : "0%",
           "--lid-rim":
             d.id === "3ds" ? "#096d79" : d.id === "ds" ? "#dfdedc" : "#8d9199",
-          "--device-ratio": `${d.width} / ${d.height}`,
+          "--device-ratio": `${view.w} / ${view.h}`,
+          "--view-ratio": view.w / view.h,
           "--original-ratio": `${d.width} / ${d.height}`,
           "--canvas-width": d.landscape
             ? "1000px"
@@ -218,8 +243,29 @@ export function Console({
         } as CSSProperties
       }
     >
+      {powered && emulate && d.id === "ds" && (
+        <iframe
+          ref={dsFrame}
+          key={session}
+          title="DS 模拟器运行实例"
+          className="ds-runtime"
+          src={`/emulator.html?session=${session}`}
+          tabIndex={-1}
+          aria-hidden="true"
+          allow="autoplay; gamepad"
+          onLoad={(e) => onFrame(e.currentTarget)}
+        />
+      )}
       <div className="console-shadow" />
-      <div className="handheld" aria-label={d.name}>
+      <div
+        className="handheld"
+        aria-label={d.name}
+        style={{
+          width: `${(d.width / view.w) * 100}%`,
+          left: `${(-view.x / view.w) * 100}%`,
+          top: `${(-view.y / view.h) * 100}%`,
+        }}
+      >
         {d.lid && (
           <div className="lid" style={percentRect(d.lid, d.width, d.height)}>
             <div className="lid-back">
@@ -228,6 +274,22 @@ export function Console({
             <div className="lid-thickness" />
             <div className="lid-front" style={photoStyle}>
               {d.screens.filter((r) => r.lid).map((r, i) => screen(r, i, true))}
+              {d.sliders
+                ?.filter((k) => k.lid)
+                .map((k) => (
+                  <HardwareSlider
+                    key={k.id}
+                    label={k.label}
+                    vertical={k.vertical}
+                    value={hardwareValues[k.id] ?? 0}
+                    onChange={(v) => onHardwareValue(k.id, v)}
+                    style={percentRect(
+                      { ...k, x: k.x - d.lid!.x, y: k.y - d.lid!.y },
+                      d.lid!.w,
+                      d.lid!.h,
+                    )}
+                  />
+                ))}
             </div>
             <button
               className="lid-handle"
@@ -339,6 +401,9 @@ export function Console({
                   ...percentRect(key, d.width, d.height),
                   ...buttonArt(d, key, key.id),
                 }}
+                onLongActivate={
+                  key.action === "sound" ? () => onSound(true) : undefined
+                }
                 onActivate={() => {
                   switch (key.action) {
                     case "menu":
@@ -350,8 +415,8 @@ export function Console({
                     case "volume-down":
                       onVolume(-5);
                       break;
-                    case "mute":
-                      onMute();
+                    case "sound":
+                      onSound(false);
                       break;
                     case "light":
                       onLight();
@@ -370,6 +435,18 @@ export function Console({
               />
             )}
           </div>
+          {d.sliders
+            ?.filter((k) => !k.lid)
+            .map((k) => (
+              <HardwareSlider
+                key={k.id}
+                label={k.label}
+                vertical={k.vertical}
+                value={hardwareValues[k.id] ?? 60}
+                onChange={(v) => onHardwareValue(k.id, v)}
+                style={percentRect(k, d.width, d.height)}
+              />
+            ))}
           {d.powerKey && (
             <button
               className="photo-power"

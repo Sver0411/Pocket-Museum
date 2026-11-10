@@ -53,3 +53,32 @@ describe("native media persistence", () => {
     expect((await storage.media("vita")).map((x) => x.id)).toEqual(["media-b"]);
   });
 });
+
+describe("multi-system ROM import", () => {
+  it("validates GB checksum and DS ARM ranges while preserving SHA identities", async () => {
+    const gb = await readFile("public/roms/snake.gb"),
+      nds = await readFile("public/roms/jamclown.nds");
+    const a = await importRom(new File([gb], "snake.gb"), ["gb", "gbc"]);
+    const b = await importRom(new File([nds], "jamclown.nds"), ["nds"]);
+    expect(a.system).toBe("gb");
+    expect(b.system).toBe("nds");
+    expect(a.id).toBe(
+      "94f66ec5063b33bea89ed80ed05334e1655bcc71114d2c9a33a953aa368bb049",
+    );
+    await expect(
+      importRom(new File([nds], "wrong.nds"), ["gba"]),
+    ).rejects.toThrow(".gba");
+    const corruptGb = new Uint8Array(gb);
+    corruptGb[0x14d] ^= 1;
+    await expect(
+      importRom(new File([corruptGb], "bad.gb"), ["gb"]),
+    ).rejects.toThrow("校验和");
+    const corruptDs = new Uint8Array(nds);
+    new DataView(corruptDs.buffer).setUint32(0x20, 0x7fffffff, true);
+    await expect(
+      importRom(new File([corruptDs], "bad.nds"), ["nds"]),
+    ).rejects.toThrow("ARM");
+    await storage.putSave(b.id, "state", new Uint8Array([1, 2]), "desmume");
+    expect((await storage.getSave(b.id, "state"))?.core).toBe("desmume");
+  });
+});

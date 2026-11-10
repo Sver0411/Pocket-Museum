@@ -8,7 +8,8 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://127.0.0.1:5173",
-    channel: "chrome",
+    channel:
+      process.env.POCKET_MUSEUM_BROWSER === "chrome" ? "chrome" : undefined,
     viewport: { width: 1440, height: 1100 },
     screenshot: "only-on-failure",
     trace: "retain-on-failure",

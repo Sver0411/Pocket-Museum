@@ -1,0 +1,58 @@
+{
+  "author": "Kenney Vleugels",
+  "license": "CC0-1.0",
+  "original": "https://kenney.nl/assets/ui-audio",
+  "source": "https://github.com/Calinou/kenney-ui-audio",
+  "commit": "8c3d81b9159d058c444f89d12d518276b0b09345",
+  "conversion": "Upstream mirror converted original Ogg Vorbis to WAV; copied unmodified from mirror.",
+  "files": [
+    {
+      "file": "rollover1.wav",
+      "bytes": 41806,
+      "sha256": "97de1348d22990014d9b5da4a2dedb6a070b324bb5966f7b4819eafa616b4a0c",
+      "seconds": 0.23655
+    },
+    {
+      "file": "mouseclick1.wav",
+      "bytes": 13646,
+      "sha256": "9f2a6efb18f36bcbae784af13f6f0edfaee99202acf6a830610b77b786c6004f",
+      "seconds": 0.07692
+    },
+    {
+      "file": "switch6.wav",
+      "bytes": 64334,
+      "sha256": "2b3db033e6f5512bd2f1cfa240cba71b5cd9f9fc4c635bedfc064e795a71bb52",
+      "seconds": 0.36426
+    },
+    {
+      "file": "switch7.wav",
+      "bytes": 37710,
+      "sha256": "7da9853cf7ca16b5b136026d77cccfc667994d38c8c23af9ef0089e90bbf9fe0",
+      "seconds": 0.21333
+    },
+    {
+      "file": "switch1.wav",
+      "bytes": 57166,
+      "sha256": "e48f397e7dffafab68a2252287b8ff0e3805f141f76e51a3c6285e72e0d443d0",
+      "seconds": 0.32363
+    },
+    {
+      "file": "switch2.wav",
+      "bytes": 56142,
+      "sha256": "b0f7b256b9baa6ff7558c2d7404d29754671939627b9ae27cc49b5d558721170",
+      "seconds": 0.31782
+    },
+    {
+      "file": "switch10.wav",
+      "bytes": 68430,
+      "sha256": "7697bd3c227800f5625d3ba2bd82f4546310a1acd2e54b3b2ccae1ea63d73260",
+      "seconds": 0.38748
+    },
+    {
+      "file": "mouserelease1.wav",
+      "bytes": 15182,
+      "sha256": "2841f77228c7956b804cd828da10897746cfb5efafc80d6066e58cab7db5be1c",
+      "seconds": 0.08562
+    }
+  ]
+}

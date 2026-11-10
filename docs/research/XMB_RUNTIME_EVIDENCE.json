@@ -1,0 +1,16 @@
+{
+  "evidence": "ev_d609ce79b6813749456d87797cffd67f2b071b6385bff5997484b80b0145ee62",
+  "url": "https://thegammasqueeze.github.io/xmb-web/",
+  "cleanup": "terminated-owned-process",
+  "limitations": [
+    "Artifact identity is unavailable for this observation.",
+    "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+    "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+    "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+    "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+    "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+    "Storage values are hashed only after declared-secret redaction.",
+    "Browser host platform and architecture were not observed."
+  ],
+  "decision": "Observed PS3 reconstruction; wrong target model and extracted firmware font/assets excluded. Not copied into PSP."
+}

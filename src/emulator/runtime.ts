@@ -3,6 +3,22 @@ import { CHANNEL, isCommand } from "./protocol";
 import type { Request, Response } from "./protocol";
 const session = new URLSearchParams(location.search).get("session");
 const adapter = new EmulatorAdapter();
+// The pinned RetroArch frontend retains this promise but only catches it when
+// releasing the lock. Observe rejection immediately while preserving the original
+// rejected promise; denying an optional screen lock must not be an unhandled error.
+try {
+  const wakeLock = navigator.wakeLock;
+  if (wakeLock) {
+    const request = wakeLock.request.bind(wakeLock);
+    wakeLock.request = (type) => {
+      const pending = request(type);
+      void pending.catch(() => {});
+      return pending;
+    };
+  }
+} catch {
+  // Some browsers expose an immutable implementation.
+}
 // No keyboard listeners from the underlying emulator may bypass the parent arbiter.
 for (const type of ["keydown", "keyup"])
   window.addEventListener(type, (e) => e.stopImmediatePropagation(), true);
@@ -25,10 +41,13 @@ window.addEventListener("message", async (event: MessageEvent<Request>) => {
       case "hello":
         break;
       case "start":
-        await adapter.start(c.rom, c.gameId, c.nativeSave);
+        await adapter.start(c.rom, c.gameId, c.nativeSave, c.system);
         break;
       case "input":
         adapter.input(c.button, c.pressed);
+        break;
+      case "touch":
+        adapter.touch(c.x, c.y, c.down);
         break;
       case "pause":
         adapter.pause(c.paused);

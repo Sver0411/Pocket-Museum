@@ -6,6 +6,8 @@ export const FLAT_VIEWS: Partial<Record<DeviceId, Partial<DeviceDefinition>>> =
   {
     sp: {
       view: "flat",
+      viewport: { x: 20, y: 80, w: 860, h: 1570 },
+      sliders: [],
       asset: "/assets/sp-flat-v1.png",
       width: 898,
       height: 1751,
@@ -46,6 +48,8 @@ export const FLAT_VIEWS: Partial<Record<DeviceId, Partial<DeviceDefinition>>> =
     },
     ds: {
       view: "flat",
+      viewport: { x: 10, y: 73, w: 1125, h: 1230 },
+      sliders: [],
       asset: "/assets/ds-flat-v1.png",
       width: 1145,
       height: 1374,
@@ -90,6 +94,19 @@ export const FLAT_VIEWS: Partial<Record<DeviceId, Partial<DeviceDefinition>>> =
     },
     "3ds": {
       view: "flat",
+      viewport: { x: 7, y: 14, w: 1145, h: 1275 },
+      sliders: [
+        {
+          id: "depth",
+          label: "3D 深度",
+          x: 1117,
+          y: 393,
+          w: 28,
+          h: 150,
+          vertical: true,
+          lid: true,
+        },
+      ],
       asset: "/assets/3ds-flat-v1.png",
       width: 1158,
       height: 1359,

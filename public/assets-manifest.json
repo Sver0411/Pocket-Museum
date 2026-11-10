@@ -54,14 +54,159 @@
       "sha256": "4648702738dacd0d67ac60675f916625f460eb66e33053328b07cb5aef58bda7"
     },
     {
+      "path": "audio/kenney-ui/mouseclick1.wav",
+      "bytes": 13646,
+      "sha256": "9f2a6efb18f36bcbae784af13f6f0edfaee99202acf6a830610b77b786c6004f"
+    },
+    {
+      "path": "audio/kenney-ui/mouserelease1.wav",
+      "bytes": 15182,
+      "sha256": "2841f77228c7956b804cd828da10897746cfb5efafc80d6066e58cab7db5be1c"
+    },
+    {
+      "path": "audio/kenney-ui/provenance.json",
+      "bytes": 1741,
+      "sha256": "82ec5dff1011208d4f975ab66a54c65d670c93bd7abff8733b3eeb984d37d22f"
+    },
+    {
+      "path": "audio/kenney-ui/rollover1.wav",
+      "bytes": 41806,
+      "sha256": "97de1348d22990014d9b5da4a2dedb6a070b324bb5966f7b4819eafa616b4a0c"
+    },
+    {
+      "path": "audio/kenney-ui/switch1.wav",
+      "bytes": 57166,
+      "sha256": "e48f397e7dffafab68a2252287b8ff0e3805f141f76e51a3c6285e72e0d443d0"
+    },
+    {
+      "path": "audio/kenney-ui/switch10.wav",
+      "bytes": 68430,
+      "sha256": "7697bd3c227800f5625d3ba2bd82f4546310a1acd2e54b3b2ccae1ea63d73260"
+    },
+    {
+      "path": "audio/kenney-ui/switch2.wav",
+      "bytes": 56142,
+      "sha256": "b0f7b256b9baa6ff7558c2d7404d29754671939627b9ae27cc49b5d558721170"
+    },
+    {
+      "path": "audio/kenney-ui/switch6.wav",
+      "bytes": 64334,
+      "sha256": "2b3db033e6f5512bd2f1cfa240cba71b5cd9f9fc4c635bedfc064e795a71bb52"
+    },
+    {
+      "path": "audio/kenney-ui/switch7.wav",
+      "bytes": 37710,
+      "sha256": "7da9853cf7ca16b5b136026d77cccfc667994d38c8c23af9ef0089e90bbf9fe0"
+    },
+    {
+      "path": "audio/menu-loop.wav",
+      "bytes": 2605104,
+      "sha256": "92537b47f9d970da529c0818052e7d900625c54247d410bdb0b04c15aadd6f7e"
+    },
+    {
+      "path": "fonts/fs-doublescreen-eno-c.ttf",
+      "bytes": 200428,
+      "sha256": "f173eb81134c120cadcd6e3cce50cae77031db6ea36110dd6060be96c1d2e3c6"
+    },
+    {
       "path": "licenses/2048-CC0.txt",
       "bytes": 7048,
       "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
     },
     {
+      "path": "licenses/BlocksDS-DSWifi-COPYING.lwip.txt",
+      "bytes": 1425,
+      "sha256": "bc13ef107e0287ddb92d0e3e4b87906dd7dc4b6779a1d93cf96859954c9274b8"
+    },
+    {
+      "path": "licenses/BlocksDS-DSWifi-COPYING.mbedtls.txt",
+      "bytes": 29852,
+      "sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b"
+    },
+    {
+      "path": "licenses/BlocksDS-DSWifi-COPYING.txt",
+      "bytes": 1299,
+      "sha256": "c5d1023c05eeb22cc87fe645d7f88e393004587fcc5d490b120a31bae413d276"
+    },
+    {
+      "path": "licenses/BlocksDS-Maxmod-ISC.txt",
+      "bytes": 1953,
+      "sha256": "21afef4375bfc4196ba96200837e60bf99b32afc0e89bae1210e5987b8bdd28a"
+    },
+    {
+      "path": "licenses/BlocksDS-libnds-LICENSE",
+      "bytes": 1325,
+      "sha256": "55f0918e6e76092838c08a37da957a4ad760f814573b4c73235c994002087f79"
+    },
+    {
+      "path": "licenses/BlocksDS-libnds-LICENSE.FatFs",
+      "bytes": 1913,
+      "sha256": "b896e32fb2cdb3fc8b3b6fd854706fca4ac55619fbb6d5eb2429cb05ee338966"
+    },
+    {
+      "path": "licenses/BlocksDS-picolibc-COPYING.txt",
+      "bytes": 214665,
+      "sha256": "8144050bf95453ae1e74edb7fd5a1ebc7175ee344b59fcdfb991c84e9190494d"
+    },
+    {
+      "path": "licenses/BlocksDS-provenance.json",
+      "bytes": 2001,
+      "sha256": "63d6994588de695dbfe95fc4fb20867c95de418d16464971477ca71382dfdb69"
+    },
+    {
+      "path": "licenses/DeSmuME-GPL-2.0.txt",
+      "bytes": 18092,
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
       "path": "licenses/EmulatorJS-GPL-3.0.txt",
       "bytes": 35111,
       "sha256": "a617fab6d251b3302b1cb2c1c94f52d1c584f6fcb2fc218ec1a475bc08053a61"
+    },
+    {
+      "path": "licenses/FS-DoubleScreen-OFL.txt",
+      "bytes": 4407,
+      "sha256": "0745454ffb5a57f373109f1f3ab082a1bc7ccb67118cbb4c90f5faf26bf4cacd"
+    },
+    {
+      "path": "licenses/FS-DoubleScreen-README.txt",
+      "bytes": 665,
+      "sha256": "e0ed9768ba17ac8560690d0fdba267d17608d080c437d92571b092a11f8d23fc"
+    },
+    {
+      "path": "licenses/GB-Snake-MIT.txt",
+      "bytes": 1077,
+      "sha256": "ebcea337e377335c68fc022e214f91507c173950189c4b881bb33b68357528a2"
+    },
+    {
+      "path": "licenses/GB-Snake-Sound-BSD.txt",
+      "bytes": 1488,
+      "sha256": "39f159d3636a06ba1b57b8236cc5c6c531094a2adcbb1c421a438be1e361aa91"
+    },
+    {
+      "path": "licenses/GBDK-LIBRARY-LICENSE.txt",
+      "bytes": 18563,
+      "sha256": "138567c019af8a54e4cf46b6621587d9912658d9d3359f8902bac728f7fe4ec9"
+    },
+    {
+      "path": "licenses/GBDK-LICENSE.txt",
+      "bytes": 3456,
+      "sha256": "18095f7690d1565e267e51b2954bd59108231e0c5dd2d5837e226ddcb6f1c4f7"
+    },
+    {
+      "path": "licenses/GCC-Runtime-Exception.txt",
+      "bytes": 3324,
+      "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74"
+    },
+    {
+      "path": "licenses/JamClown-MIT.txt",
+      "bytes": 1072,
+      "sha256": "ac7d54c4e6b6fe8c5626d4abeb3404434b565b561767e81013868be9892d67c8"
+    },
+    {
+      "path": "licenses/Kenney-UI-Audio-CC0.txt",
+      "bytes": 479,
+      "sha256": "4f88ab3c885c87874834441a0d009cea8942f57461d7b870be65cf4e31362073"
     },
     {
       "path": "licenses/Lucide-ISC.txt",
@@ -74,14 +219,29 @@
       "sha256": "b3c68af737a0bfc1cafd13b617323c0212e8def5b86ff2c02d07c07f4cbfc2a4"
     },
     {
+      "path": "licenses/Menu-Loop-CC0.txt",
+      "bytes": 573,
+      "sha256": "d2ff34746bb571ce7a4fd8a29447d30b48281429fc31226bacd824861b8fb292"
+    },
+    {
       "path": "licenses/NOTICE.md",
-      "bytes": 4711,
-      "sha256": "02c8c9b66076b161706760c112b38834f6cee8c2ddc1cd97b09f658e349e50d0"
+      "bytes": 10451,
+      "sha256": "33c48c9a2a984177619889544f4ac8ee6c0be1e62f1c1f12fc0cb33b7c8f23ae"
     },
     {
       "path": "licenses/React-MIT.txt",
       "bytes": 1088,
       "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+    },
+    {
+      "path": "licenses/Vita3K-GPL-2.0.txt",
+      "bytes": 18092,
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "licenses/XMDB-MIT.txt",
+      "bytes": 1056,
+      "sha256": "cae7a9beaccbe3fbd726a7b269c737c4b5ea2de7c85948631846d0101d779f2a"
     },
     {
       "path": "licenses/devkitARM-MPL-2.0.txt",
@@ -104,6 +264,11 @@
       "sha256": "b3901d3b5e4baf6670978bba984d2ce6ef8998d2208489e9422d56cef8b567f9"
     },
     {
+      "path": "licenses/source/DeSmuME-c6317a4.tar.gz",
+      "bytes": 11408505,
+      "sha256": "4e94bb7f31c35a51bb03076fd4d087c1dc011f15d734a99650f315aa567d95ba"
+    },
+    {
       "path": "licenses/source/EmulatorJS-local-version.patch",
       "bytes": 510,
       "sha256": "45e8999b9c10e7adb772f724d9c20156c92ad0236be74fe50f014d2f2ea9a22b"
@@ -112,6 +277,16 @@
       "path": "licenses/source/EmulatorJS-v4.2.3.tar.gz",
       "bytes": 558990,
       "sha256": "d86156c77e175737071ca9c119733ebd8516aa58b8a869e762f69ee7a40ec312"
+    },
+    {
+      "path": "licenses/source/GB-Snake-7c5145c.tar.gz",
+      "bytes": 382415,
+      "sha256": "b7b88d89baad418667656e799464c74c90ee1b860cc6a12849eec3933f076810"
+    },
+    {
+      "path": "licenses/source/JamClown-v1.0.zip",
+      "bytes": 268004,
+      "sha256": "156d46b4578133688aa4804b77f2b2b274d30adb508fcd2a5c711c10128b1000"
     },
     {
       "path": "licenses/source/devkitarm-crtls-1c0c102.tar.gz",
@@ -127,6 +302,16 @@
       "path": "roms/2048.gba",
       "bytes": 262144,
       "sha256": "6c6cfe318b1c724a29c5e08516a15e5ace354e32b2a04a08d388cfeb4c65ee58"
+    },
+    {
+      "path": "roms/jamclown.nds",
+      "bytes": 409600,
+      "sha256": "21c020cb71997de4cb487d65f0a301679bfb3d4855baa49c36ee72d17d866ccd"
+    },
+    {
+      "path": "roms/snake.gb",
+      "bytes": 32768,
+      "sha256": "94f66ec5063b33bea89ed80ed05334e1655bcc71114d2c9a33a953aa368bb049"
     },
     {
       "path": "vendor/emulatorjs/4.2.3/data/compression/README.md",
@@ -154,6 +339,11 @@
       "sha256": "e4ea9bd0b13a9767916b424469e30205f47f267ecd9125ed56fb9ff0b9bc1b58"
     },
     {
+      "path": "vendor/emulatorjs/4.2.3/data/cores/desmume-wasm.data",
+      "bytes": 1172604,
+      "sha256": "a9fddaa4bd742e558dfe5095fa4eaf074493b591a7bc18c5f7c65d64b9fa7572"
+    },
+    {
       "path": "vendor/emulatorjs/4.2.3/data/cores/mgba-legacy-wasm.data",
       "bytes": 1054993,
       "sha256": "e300d2f368c82bf61d77c972c36e367cf16408ec3d50beede080337519a3d696"
@@ -162,6 +352,11 @@
       "path": "vendor/emulatorjs/4.2.3/data/cores/mgba-wasm.data",
       "bytes": 1055616,
       "sha256": "01fcaf6d4296ef1db6676e0c69400c4474e24572d0b2b99cc097e4ae885e02d7"
+    },
+    {
+      "path": "vendor/emulatorjs/4.2.3/data/cores/reports/desmume.json",
+      "bytes": 167,
+      "sha256": "d658e595994c6bf66acf3955d31eefe41e1418d58569c702fac80535262f02c2"
     },
     {
       "path": "vendor/emulatorjs/4.2.3/data/cores/reports/mgba.json",

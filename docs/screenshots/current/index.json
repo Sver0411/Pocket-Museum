@@ -1,0 +1,29 @@
+{
+  "capturedAt": "2026-11-10T08:20:17.110Z",
+  "source": "http://127.0.0.1:5173",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "mobile": {
+    "width": 390,
+    "height": 844
+  },
+  "files": [
+    "docs/screenshots/current/museum-desktop.png",
+    "docs/screenshots/current/museum-mobile.png",
+    "docs/screenshots/current/gb.png",
+    "docs/screenshots/current/gba.png",
+    "docs/screenshots/current/sp.png",
+    "docs/screenshots/current/ds.png",
+    "docs/screenshots/current/3ds.png",
+    "docs/screenshots/current/psp.png",
+    "docs/screenshots/current/vita.png",
+    "docs/screenshots/current/gb-game.png",
+    "docs/screenshots/current/gba-game.png",
+    "docs/screenshots/current/sp-game.png",
+    "docs/screenshots/current/ds-game.png",
+    "docs/screenshots/current/ds-mobile.png"
+  ],
+  "pageErrors": []
+}

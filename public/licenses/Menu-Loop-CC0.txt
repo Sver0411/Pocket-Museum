@@ -1,0 +1,8 @@
+Menu Loop — Victor (Akikazer), 2013-12-25
+Source and author's CC0 dedication: https://opengameart.org/content/menu-loop
+Original download: https://opengameart.org/sites/default/files/Loop-Menu.wav
+Copied unmodified as public/audio/menu-loop.wav, 2,605,104 bytes, stereo 44,100 Hz / 16-bit PCM, 14.7679 seconds.
+CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
+Full CC0 legal text is distributed alongside this notice in 2048-CC0.txt.
+
+This is an authorized substitute background loop for Pocket Museum, not extracted PlayStation Vita firmware music.

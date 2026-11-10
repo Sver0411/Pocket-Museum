@@ -14,6 +14,8 @@ const paths = [
   ...(await walk("public/roms")),
   ...(await walk("public/licenses")),
   ...(await walk("public/assets")),
+  ...(await walk("public/fonts")),
+  ...(await walk("public/audio")),
 ].sort();
 const files = [];
 for (const path of paths) {

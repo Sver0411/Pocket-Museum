@@ -23,6 +23,29 @@ export const KEY_MAP: Record<string, Button> = {
 export class InputController {
   private sources = new Map<string, Button>();
   private enabled = false;
+  private lastAnalog = { x: 0, y: 0 };
+  private analogHandler?: (x: number, y: number) => void;
+  private analogSources = new Map<string, { x: number; y: number }>();
+  setAnalogHandler(handler?: (x: number, y: number) => void) {
+    this.analogHandler?.(0, 0);
+    this.analogSources.clear();
+    this.lastAnalog = { x: 0, y: 0 };
+    this.analogHandler = handler;
+  }
+  analog(source: string, x: number, y: number) {
+    if (!this.analogHandler) return false;
+    if (!this.enabled && (x || y)) return true;
+    if (x || y) this.analogSources.set(source, { x, y });
+    else this.analogSources.delete(source);
+    let point = { x: 0, y: 0 };
+    for (const p of this.analogSources.values())
+      if (Math.hypot(p.x, p.y) >= Math.hypot(point.x, point.y)) point = p;
+    if (point.x !== this.lastAnalog.x || point.y !== this.lastAnalog.y) {
+      this.lastAnalog = point;
+      this.analogHandler(point.x, point.y);
+    }
+    return true;
+  }
   constructor(
     private emit: (button: Button, pressed: boolean) => void,
     private change: (
@@ -62,6 +85,8 @@ export class InputController {
     if (![...this.sources.values()].includes(button)) this.emit(button, false);
   }
   releasePrefix(prefix: string) {
+    for (const source of [...this.analogSources.keys()])
+      if (source.startsWith(prefix)) this.analog(source, 0, 0);
     let changed = false;
     for (const source of [...this.sources.keys()])
       if (source.startsWith(prefix)) {
@@ -71,6 +96,9 @@ export class InputController {
     if (changed) this.publish();
   }
   releaseAll() {
+    this.analogSources.clear();
+    this.lastAnalog = { x: 0, y: 0 };
+    this.analogHandler?.(0, 0);
     for (const b of new Set(this.sources.values())) this.emit(b, false);
     this.sources.clear();
     this.publish();
@@ -98,13 +126,19 @@ export function readGamepads(
   for (const pad of pads) {
     if (!pad || !pad.connected || pad.mapping !== "standard") continue;
     connected.add(pad.index);
+    const analogOwned = input.analog(
+      `pad:${pad.index}:axis`,
+      pad.axes[0] ?? 0,
+      pad.axes[1] ?? 0,
+    );
     for (const b of BUTTONS) {
       const pressed = Object.entries(PAD_BUTTONS).some(
         ([i, key]) => key === b && pad.buttons[+i]?.pressed,
       );
       input.set(`pad:${pad.index}:button:${b}`, b, pressed);
       const axis =
-        b === "Left"
+        !analogOwned &&
+        (b === "Left"
           ? pad.axes[0] < -0.35
           : b === "Right"
             ? pad.axes[0] > 0.35
@@ -112,7 +146,7 @@ export function readGamepads(
               ? pad.axes[1] < -0.35
               : b === "Down"
                 ? pad.axes[1] > 0.35
-                : false;
+                : false);
       input.set(`pad:${pad.index}:axis:${b}`, b, axis);
     }
   }

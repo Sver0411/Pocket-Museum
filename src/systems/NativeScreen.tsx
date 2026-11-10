@@ -1,3 +1,11 @@
+import { useSystemResources } from "./resources";
+import { ThreeApplet, VitaGlyph } from "./ReferenceIcons";
+import {
+  PSP_GEOMETRY,
+  pspItemY,
+  VITA_BUBBLES,
+  VITA_GATE,
+} from "./referenceGeometry";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, Dispatch, PointerEvent } from "react";
 import {
@@ -42,13 +50,15 @@ import {
   APPS_VITA,
   XMB,
   activeSettings,
-  settingGroups,
+  settingGroupNames,
   settingValue,
   orderedApps,
 } from "./model";
 import { clockDate, displayedTime, inputKind } from "./settingsBehavior";
 import { useIconReorder } from "./useIconReorder";
 import { NativeAppIcon } from "./NativeAppIcon";
+import { PspWave } from "./PspWave";
+import { Icon as XmbIcon } from "../third-party/xmdb/Icons";
 import { PictoChat } from "./PictoChat";
 import type { LocalChat } from "./PictoChat";
 import {
@@ -72,6 +82,7 @@ type Props = {
   onPowerOff: () => void;
   chat?: LocalChat;
   volume?: number;
+  headphones?: boolean;
 };
 const ICONS: Record<string, typeof Settings> = {
   settings: Settings,
@@ -122,38 +133,48 @@ function IconTile({
   selected,
   onClick,
   bubble = false,
+  style,
 }: {
   app: AppIcon;
   selected: boolean;
   onClick: () => void;
   bubble?: boolean;
+  style?: CSSProperties;
 }) {
+  const resources = useSystemResources(bubble ? "vita" : "3ds");
   return (
     <button
       type="button"
       className={`${bubble ? "vita-bubble" : "three-tile"} ${selected ? "selected" : ""}`}
-      style={{ "--app-color": app.color } as CSSProperties}
+      style={{ "--app-color": app.color, ...style } as CSSProperties}
       onClick={onClick}
       aria-label={app.name}
       data-app-id={app.id}
     >
       <span className="system-icon">
-        {!bubble &&
-        [
-          "health",
-          "camera",
-          "sound",
-          "mii",
-          "card",
-          "settings",
-          "ar",
-          "people",
-          "chart",
-          "download",
-        ].includes(app.icon) ? (
+        {resources?.icons[app.id] ? (
+          <img
+            className="system-resource-icon"
+            src={resources.icons[app.id]}
+            alt=""
+          />
+        ) : bubble ? (
+          <VitaGlyph name={app.id} />
+        ) : [
+            "health",
+            "camera",
+            "sound",
+            "mii",
+            "card",
+            "settings",
+            "ar",
+            "people",
+            "chart",
+            "download",
+          ].includes(app.icon) ? (
           <NativeAppIcon name={app.icon} size={32} />
         ) : (
-          <SystemIcon name={app.icon} size={bubble ? 62 : 32} />
+          <SystemIcon name={app.icon} size={32} />
         )}
       </span>
       {bubble && <span className="bubble-label">{app.name}</span>}
@@ -278,7 +299,19 @@ function SettingsPanel({
   onPowerOff: () => void;
 }) {
   const entries = activeSettings(s),
-    groups = Object.keys(settingGroups(s));
+    groups = settingGroupNames(s);
+  const isThreeRoot = s.device === "3ds" && !s.section;
+  const isThreeData = s.device === "3ds" && s.section === "Data Management";
+  const otherPage =
+    s.device === "3ds" && s.section === "Other Settings"
+      ? Math.floor(s.selection / 3)
+      : 0;
+  const visibleEntries =
+    s.device === "3ds" && s.section === "Other Settings"
+      ? entries.slice(otherPage * 3, otherPage * 3 + 3)
+      : entries;
+  const selectionOffset =
+    s.device === "3ds" && s.section === "Other Settings" ? otherPage * 3 : 0;
   const editor = entries.find((item) => item.key === s.editor) || null;
   const draft = s.draft;
   const value = (item: Setting) => settingValue(s, item);
@@ -287,7 +320,9 @@ function SettingsPanel({
   const save = () => dispatch({ type: "commit" });
   const list = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = list.current?.children[s.selection] as HTMLElement | undefined;
+    const el = list.current?.children[s.selection - selectionOffset] as
+      | HTMLElement
+      | undefined;
     if (el && list.current) {
       const parent = list.current;
       if (el.offsetTop < parent.scrollTop) parent.scrollTop = el.offsetTop;
@@ -300,10 +335,12 @@ function SettingsPanel({
   }, [s.selection, s.section]);
   const title = s.section || "System Settings";
   return (
-    <div className={`native-settings ${s.device}-settings`}>
+    <div
+      className={`native-settings ${s.device}-settings ${isThreeRoot ? "three-settings-root" : ""} ${isThreeData ? "three-data-management" : ""} ${s.device === "3ds" && s.section === "Other Settings" ? "three-other-settings" : ""}`}
+    >
       <header>
         <Settings size={18} />
-        <span>{title}</span>
+        <span>{s.device === "psp" ? "Settings" : title}</span>
       </header>
       {editor ? (
         <div className="native-editor">
@@ -339,12 +376,19 @@ function SettingsPanel({
       ) : (
         <div className="native-setting-list" ref={list}>
           {entries.length
-            ? entries.map((item, i) => (
+            ? visibleEntries.map((item, i) => (
                 <button
                   key={item.key}
-                  className={s.selection === i ? "chosen" : ""}
+                  style={
+                    s.device === "psp"
+                      ? { top: pspItemY(i, s.selection, true) - 24 }
+                      : undefined
+                  }
+                  className={
+                    s.selection === i + selectionOffset ? "chosen" : ""
+                  }
                   onClick={() => {
-                    dispatch({ type: "select", index: i });
+                    dispatch({ type: "select", index: i + selectionOffset });
                     change(item);
                   }}
                 >
@@ -359,6 +403,17 @@ function SettingsPanel({
                   key={name}
                   onClick={() => dispatch({ type: "section", name })}
                 >
+                  {isThreeRoot && (
+                    <span className={`three-setting-art setting-${i}`}>
+                      <ThreeApplet
+                        name={
+                          ["browser", "friends", "notifications", "notes"][i]
+                        }
+                        size={42}
+                      />
+                      {i === 0 && <Wrench size={23} />}
+                    </span>
+                  )}
                   <span>{name}</span>
                   <ChevronRight size={15} />
                 </button>
@@ -374,12 +429,35 @@ function SettingsPanel({
           )}
         </div>
       )}
+      {s.device === "3ds" && s.section === "Other Settings" && !editor && (
+        <div className="three-settings-pages">
+          <button
+            aria-label="Previous settings page"
+            disabled={otherPage === 0}
+            onClick={() =>
+              dispatch({ type: "select", index: (otherPage - 1) * 3 })
+            }
+          >
+            ‹
+          </button>
+          <span>{otherPage + 1}</span>
+          <button
+            aria-label="Next settings page"
+            disabled={(otherPage + 1) * 3 >= entries.length}
+            onClick={() =>
+              dispatch({ type: "select", index: (otherPage + 1) * 3 })
+            }
+          >
+            ›
+          </button>
+        </div>
+      )}
       {s.section === "Touch Screen" && (
         <Calibration
           onComplete={() =>
             dispatch({
               type: "dialog",
-              text: "Calibration complete.\nConfirm the touch screen response.",
+              text: "Touch response test complete.\nBrowser pointer coordinates need no hardware calibration.",
             })
           }
         />
@@ -647,6 +725,7 @@ function ThreeScreen({
   onPowerOff,
   volume,
 }: Props) {
+  const resources = useSystemResources("3ds");
   const apps = orderedApps(s),
     reorder = useIconReorder(s, dispatch, apps, "three-order");
   const homeGrid = useRef<HTMLDivElement>(null),
@@ -656,7 +735,7 @@ function ThreeScreen({
     if (!el) return;
     const rows = +(s.prefs.rows || "1"),
       col = Math.floor(s.selection / rows),
-      step = rows === 1 ? 69 : rows === 2 ? 52 : 42;
+      step = rows === 3 ? 56 : 82;
     const left = col * step;
     if (left < el.scrollLeft + step)
       el.scrollTo({ left: Math.max(0, left - step), behavior: "smooth" });
@@ -695,28 +774,70 @@ function ThreeScreen({
     return (
       <div className="three-home-top">
         <div className="three-status">
-          <span>
-            <WifiOff size={12} /> Disabled
+          <span className="three-mode">
+            <i className="three-signal" />
+            Disabled
           </span>
-          <span>
-            ♟ 0　{time.getMonth() + 1}/{time.getDate()}　
-            {displayedTime(time, s.prefs)} <BatteryFull size={17} />
+          <span className="three-pedometer">♧ 0</span>
+          <span className="three-clock">
+            {time.getMonth() + 1}/{time.getDate()} (
+            {time.toLocaleDateString("en-US", { weekday: "short" })}){" "}
+            {displayedTime(time, s.prefs)}
+          </span>
+          <span className="three-battery">
+            <i />
+            <i />
+            <i />
           </span>
         </div>
-        <div className="three-showcase">
-          <div className="three-hero-icon" style={{ color: selected?.color }}>
-            <SystemIcon name={selected?.icon || "card"} size={75} />
+        {resources?.banners[selected?.id ?? "card"] ? (
+          <img
+            className="three-resource-banner"
+            src={resources.banners[selected?.id ?? "card"]}
+            alt=""
+          />
+        ) : selected?.id === "card" ? (
+          <div className="three-home-applets">
+            {[
+              ["browser", 94],
+              ["notifications", 140],
+              ["home", 200],
+              ["friends", 249],
+              ["notes", 309],
+            ].map(([name, x]) => (
+              <span key={name} style={{ left: Number(x) - 24 }}>
+                <ThreeApplet name={String(name)} size={42} />
+              </span>
+            ))}
           </div>
-          <div className="three-icon-shadow" />
+        ) : (
+          <div className="three-showcase">
+            <div
+              className="three-software-banner"
+              style={{ color: selected?.color }}
+            >
+              <NativeAppIcon name={selected?.icon ?? "card"} size={90} />
+              <strong>{selected?.name}</strong>
+            </div>
+          </div>
+        )}
+        <div className="three-camera-hint">
+          <span>
+            L <Camera size={14} />
+          </span>
+          <span>
+            <Camera size={14} /> R
+          </span>
         </div>
-        <div className="three-camera-hint">L ◀　　▶ R</div>
       </div>
     );
   const rows = +(s.prefs.rows || "1"),
     cols = Math.ceil(APPS_3DS.length / rows);
   const offset = rows === 1 ? Math.max(0, s.selection - 1) : 0;
   return (
-    <div className="three-home-bottom">
+    <div
+      className={`three-home-bottom layout-${rows} ${app.id === "card" ? "no-card" : ""}`}
+    >
       <div className="three-toolbar">
         <button
           aria-label="Screen brightness"
@@ -754,32 +875,43 @@ function ThreeScreen({
           aria-label="Game Notes"
           onClick={() => dispatch({ type: "open", app: "notes" })}
         >
-          <NotebookPen size={17} color="#b7b930" />
+          <ThreeApplet name="notes" size={25} />
         </button>
         <button
           aria-label="Friend List"
           onClick={() => dispatch({ type: "open", app: "friends" })}
         >
-          <Smile size={17} color="#d5842e" />
+          <ThreeApplet name="friends" size={25} />
         </button>
         <button
           aria-label="Notifications"
           onClick={() => dispatch({ type: "open", app: "notifications" })}
         >
-          <MessageCircle size={17} color="#4caa67" />
+          <ThreeApplet name="notifications" size={25} />
         </button>
         <button
           aria-label="Internet Browser"
           onClick={() => dispatch({ type: "open", app: "browser" })}
         >
-          <Globe size={17} color="#4294c2" />
+          <ThreeApplet name="browser" size={25} />
         </button>
       </div>
-      <div className="three-title">
-        {app.id === "card"
-          ? "There is nothing inserted into the Game Card slot."
-          : app.name}
-      </div>
+      {rows === 1 && (
+        <div className="three-title">
+          {app.id === "card" ? (
+            <span>
+              There is nothing inserted into
+              <br />
+              the Game Card slot.
+            </span>
+          ) : (
+            <span>
+              {app.name}
+              <small>Nintendo</small>
+            </span>
+          )}
+        </div>
+      )}
       <div
         ref={homeGrid}
         className={`three-grid-viewport rows-${rows}`}
@@ -808,7 +940,7 @@ function ThreeScreen({
           {...reorder.bind}
           style={{
             gridTemplateRows: `repeat(${rows},1fr)`,
-            gridTemplateColumns: `repeat(${cols},${rows === 1 ? 64 : rows === 2 ? 47 : 37}px)`,
+            gridTemplateColumns: `repeat(${cols},${rows === 3 ? 50 : 72}px)`,
           }}
         >
           {apps.map((a, i) => (
@@ -846,16 +978,18 @@ function ThreeScreen({
         ›
       </button>
       <footer>
-        <button
-          onClick={() =>
-            dispatch({
-              type: "dialog",
-              text: "Electronic Manual\nSelect a topic using the Touch Screen.",
-            })
-          }
-        >
-          Manual
-        </button>
+        {app.id !== "card" && !s.suspended && (
+          <button
+            onClick={() =>
+              dispatch({
+                type: "dialog",
+                text: "Electronic Manual\nSelect a topic using the Touch Screen.",
+              })
+            }
+          >
+            Manual
+          </button>
+        )}
         {s.suspended ? (
           <>
             <button
@@ -865,11 +999,11 @@ function ThreeScreen({
             </button>
             <button onClick={() => dispatch({ type: "home" })}>Resume</button>
           </>
-        ) : (
+        ) : app.id !== "card" ? (
           <button onClick={() => dispatch({ type: "open", app: app.id })}>
             Open
           </button>
-        )}
+        ) : null}
       </footer>
       {s.dialog && s.dialog === "Screen Brightness" ? (
         <div className="three-brightness">
@@ -878,6 +1012,7 @@ function ThreeScreen({
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
+                aria-label={`Brightness ${n}`}
                 className={s.prefs.brightness === String(n) ? "chosen" : ""}
                 onClick={() =>
                   dispatch({ type: "set", key: "brightness", value: String(n) })
@@ -887,7 +1022,28 @@ function ThreeScreen({
               </button>
             ))}
           </div>
-          <button onClick={() => dispatch({ type: "dismiss" })}>Close</button>
+          <b className="three-power-saving-title">Power-Saving Mode</b>
+          <div className="three-power-saving">
+            {["Off", "On"].map((v) => (
+              <button
+                key={v}
+                className={
+                  (s.prefs["power-saving"] ?? "Off") === v ? "chosen" : ""
+                }
+                onClick={() =>
+                  dispatch({ type: "set", key: "power-saving", value: v })
+                }
+              >
+                {v.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <button
+            className="three-brightness-ok"
+            onClick={() => dispatch({ type: "dismiss" })}
+          >
+            Ⓐ OK
+          </button>
         </div>
       ) : (
         s.dialog && (
@@ -897,45 +1053,80 @@ function ThreeScreen({
     </div>
   );
 }
-function PspScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
+function PspScreen({
+  state: s,
+  dispatch,
+  onPowerOff,
+  volume,
+  headphones,
+}: Props) {
+  const resources = useSystemResources("psp");
   const time = useTime(s.prefs);
   const cat = XMB[s.category];
   const colour = s.prefs.colour || "Blue";
   return (
     <div className={`psp-xmb psp-colour-${colour.toLowerCase()}`}>
-      <div className="psp-waves">
-        <i />
-        <i />
-        <i />
-      </div>
+      <PspWave
+        month={
+          (
+            {
+              Blue: 5,
+              Purple: 10,
+              Pink: 1,
+              Green: 2,
+              Orange: 8,
+              Silver: 0,
+            } as Record<string, number>
+          )[colour] ?? 5
+        }
+      />
       <div className="psp-info">
         {time.getMonth() + 1}/{time.getDate()}　{displayedTime(time, s.prefs)}　
         <BatteryFull size={17} />
       </div>
       {s.phase === "home" ? (
         <>
-          <div
-            className="xmb-categories"
-            style={{ transform: `translateX(${102 - s.category * 65}px)` }}
-          >
+          <div className="xmb-categories">
             {XMB.map((c, i) => (
               <button
                 key={c.name}
                 className={i === s.category ? "selected" : ""}
+                style={{
+                  left:
+                    109 +
+                    80 * (i - s.category) +
+                    Math.max(-1, Math.min(1, i - s.category)) * 5 -
+                    32,
+                }}
                 onClick={() => dispatch({ type: "category", index: i })}
               >
-                <SystemIcon name={c.icon} size={i === s.category ? 31 : 23} />
+                {resources?.icons[`category:${c.name}`] ? (
+                  <img
+                    className="psp-resource-category"
+                    src={resources.icons[`category:${c.name}`]}
+                    alt=""
+                  />
+                ) : (
+                  <XmbIcon
+                    name={
+                      c.icon === "sound"
+                        ? "music"
+                        : c.icon === "camera"
+                          ? "folder"
+                          : c.icon
+                    }
+                    size={i === s.category ? 44 : 36}
+                  />
+                )}
                 <span>{c.name}</span>
               </button>
             ))}
           </div>
-          <div
-            className="xmb-items"
-            style={{ transform: `translateY(${-s.selection * 36}px)` }}
-          >
+          <div className="xmb-items">
             {cat.items.map((item, i) => (
               <button
                 className={i === s.selection ? "selected" : ""}
+                style={{ top: pspItemY(i, s.selection) - 24 }}
                 key={item}
                 onClick={() => {
                   dispatch({ type: "select", index: i });
@@ -945,10 +1136,18 @@ function PspScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
                   } else dispatch({ type: "open", app: item });
                 }}
               >
-                <SystemIcon
-                  name={s.category === 0 ? "settings" : cat.icon}
-                  size={i === s.selection ? 29 : 18}
-                />
+                {resources?.icons[`item:${item}`] ? (
+                  <img
+                    className="psp-resource-item"
+                    src={resources.icons[`item:${item}`]}
+                    alt=""
+                  />
+                ) : (
+                  <SystemIcon
+                    name={s.category === 0 ? "settings" : cat.icon}
+                    size={i === s.selection ? 29 : 18}
+                  />
+                )}
                 <span>{item}</span>
               </button>
             ))}
@@ -963,6 +1162,7 @@ function PspScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
           dispatch={dispatch}
           top={false}
           volume={volume}
+          headphones={headphones}
           kind={
             s.category === 1 ? "image" : s.category === 2 ? "audio" : "video"
           }
@@ -1011,14 +1211,22 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
     reorder = useIconReorder(s, dispatch, apps, "vita-order");
   const time = useTime(s.prefs);
   const app = APPS_VITA.find((a) => a.id === s.app) || APPS_VITA[0];
+  const resources = useSystemResources("vita");
   const swipe = useRef<{ x: number; y: number } | null>(null);
   const info = (
     <div className="vita-info">
       <span>
-        PS Vita <WifiOff size={20} />
+        <WifiOff size={20} /> <span className="vita-bt">ᛒ</span>
+      </span>
+      <span className="vita-open-icons" aria-hidden="true">
+        {s.open.slice(-6).map((id) => {
+          const a = APPS_VITA.find((a) => a.id === id);
+          return a && <i key={id} style={{ background: a.color }} />;
+        })}
       </span>
       <span>
-        {displayedTime(time, s.prefs)} <BatteryFull size={29} /> <i>0</i>
+        <Volume2 size={18} /> {displayedTime(time, s.prefs)}{" "}
+        <BatteryFull size={31} /> <i>0</i>
       </span>
     </div>
   );
@@ -1045,7 +1253,6 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
       >
         {info}
         <div className="vita-lock-date">
-          <strong>{displayedTime(time, s.prefs)}</strong>
           <span>
             {time.toLocaleDateString("en-US", {
               month: "long",
@@ -1053,6 +1260,7 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
               weekday: "long",
             })}
           </span>
+          <strong>{displayedTime(time, s.prefs)}</strong>
         </div>
         <button
           className="vita-peel"
@@ -1098,7 +1306,6 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
       >
         {info}
         <header>
-          <SystemIcon name={app.icon} size={36} />
           <h2>{app.name}</h2>
         </header>
         <button
@@ -1108,16 +1315,45 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
         >
           ×
         </button>
-        <div className="vita-live-board">
-          <div className="vita-live-art">
-            <SystemIcon name={app.icon} size={130} />
-          </div>
+        <div
+          className={`vita-live-board live-${app.id}`}
+          style={
+            resources?.backgrounds[`live:${app.id}`]
+              ? {
+                  backgroundImage: `url(${resources.backgrounds[`live:${app.id}`]})`,
+                  backgroundSize: "100% 100%",
+                }
+              : undefined
+          }
+        >
+          <button
+            className="vita-live-guide"
+            aria-label="User's Guide"
+            onClick={() =>
+              dispatch({
+                type: "dialog",
+                text: "User's Guide\nThis browser reconstruction does not bundle the original system manual.",
+              })
+            }
+          >
+            <span>?</span>
+          </button>
+          {app.id === "settings" && (
+            <div className="vita-settings-guide">
+              <span>?</span>
+              <b>User's Guide</b>
+            </div>
+          )}
           <button
             className="vita-start-gate"
+            style={{
+              left: app.id === "browser" ? 579 : VITA_GATE.x,
+              top: app.id === "browser" ? 149 : VITA_GATE.y,
+            }}
             onClick={() => dispatch({ type: "start" })}
           >
             <span>
-              <SystemIcon name={app.icon} size={66} />
+              <VitaGlyph name={app.id} size={108} />
             </span>
             <b>Start</b>
           </button>
@@ -1180,6 +1416,10 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
             key={a.id}
             bubble
             app={a}
+            style={{
+              left: VITA_BUBBLES[i][0] - 76,
+              top: VITA_BUBBLES[i][1] - 67,
+            }}
             selected={s.selection === i}
             onClick={() => dispatch({ type: "open", app: a.id })}
           />
@@ -1256,6 +1496,7 @@ function SystemApplication({
 }
 export function NativeScreen(props: Props) {
   const { state: s, screen } = props;
+  const resources = useSystemResources(s.device);
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 1, h: 1 });
   const resolution =
@@ -1283,9 +1524,11 @@ export function NativeScreen(props: Props) {
   }, []);
   return (
     <div
-      className={`native-screen native-${s.device}`}
+      className={`native-screen native-${s.device} ${s.prefs.large === "On" ? "large-text" : ""}`}
       data-testid={`native-screen-${screen}`}
       data-system-phase={s.phase}
+      data-custom-home={resources?.backgrounds.home ? "true" : undefined}
+      data-custom-lock={resources?.backgrounds.lock ? "true" : undefined}
       ref={ref}
     >
       <div
@@ -1294,9 +1537,28 @@ export function NativeScreen(props: Props) {
           {
             width: resolution[0],
             height: resolution[1],
-            transform: `scale(${size.w / resolution[0]},${size.h / resolution[1]})`,
+            left:
+              (size.w -
+                resolution[0] *
+                  Math.min(size.w / resolution[0], size.h / resolution[1])) /
+              2,
+            top:
+              (size.h -
+                resolution[1] *
+                  Math.min(size.w / resolution[0], size.h / resolution[1])) /
+              2,
+            transform: `scale(${Math.min(size.w / resolution[0], size.h / resolution[1])})`,
             filter: `brightness(${s.prefs.brightness?.match(/^[1-5]$/) ? 0.6 + Number(s.prefs.brightness) * 0.08 : 1}) ${s.prefs.invert === "On" ? "invert(1)" : ""} ${s.prefs.contrast === "On" ? "contrast(1.5)" : ""}`,
+            fontFamily: resources?.font
+              ? `"PocketMuseum-${s.device}"`
+              : undefined,
             fontWeight: s.prefs.bold === "On" ? "bold" : undefined,
+            "--resource-home": resources?.backgrounds.home
+              ? `url(${resources.backgrounds.home})`
+              : undefined,
+            "--resource-lock": resources?.backgrounds.lock
+              ? `url(${resources.backgrounds.lock})`
+              : undefined,
             "--system-accent":
               (
                 {

@@ -1,6 +1,25 @@
+import { PpssppClient } from "./emulator/PpssppClient";
+import { ThemeBackdrop } from "./components/ThemeBackdrop";
+import { ExternalScreen } from "./components/ExternalScreen";
+import type { CaptureCrop } from "./components/ExternalScreen";
+import {
+  clearSystemResources,
+  importSystemResources,
+  restoreSystemResources,
+  useSystemResources,
+} from "./systems/resources";
+import {
+  DEVICE_ADAPTERS,
+  acceptsGame,
+  coreFor,
+  DEMOS,
+  gameSystem,
+} from "./emulator/systems";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUpFromLine,
+  ArrowLeft,
+  SlidersHorizontal,
   Check,
   ChevronDown,
   ChevronRight,
@@ -21,6 +40,8 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
+import { audioManager, SOUND_PRESETS } from "./audio/AudioManager";
+import { MuseumHome } from "./components/MuseumHome";
 import { DEVICES, deviceById } from "./devices";
 import type { DeviceId } from "./devices";
 import { useNativeSystem } from "./systems/useNativeSystem";
@@ -61,13 +82,103 @@ function download(data: Uint8Array, name: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+interface DisplayProfile {
+  light: boolean;
+  muted: boolean;
+  volume: number;
+  hardware: Record<string, number>;
+  headphones: boolean;
+}
+function defaultDisplay(): DisplayProfile {
+  return {
+    light: true,
+    muted: true,
+    volume: 60,
+    hardware: { contrast: 65, depth: 0 },
+    headphones: false,
+  };
+}
+function routeDevice(): DeviceId | undefined {
+  const id = location.hash.match(/^#\/play\/([a-z0-9]+)$/)?.[1];
+  return DEVICES.find((d) => d.id === id)?.id;
+}
 export default function App() {
-  const [deviceId, setDeviceId] = useState<DeviceId>(
-    window.__POCKETSP_DEVICE__ || "sp",
+  const [inMuseum, setInMuseum] = useState(
+    !(STANDALONE && !COLLECTION) && !routeDevice(),
   );
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [connectionOpen, setConnectionOpen] = useState(false),
+    [externalVersion, setExternalVersion] = useState(""),
+    [externalEndpoint, setExternalEndpoint] = useState(
+      "ws://127.0.0.1:27312/debugger",
+    );
+  const [externalStream, setExternalStream] = useState<MediaStream>(),
+    [externalStill, setExternalStill] = useState<string>(),
+    [captureCrop, setCaptureCrop] = useState<CaptureCrop>({
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+    });
+  const external = useRef<PpssppClient | null>(null),
+    externalMedia = useRef<MediaStream | undefined>(undefined);
+  const stopCapture = () => {
+    externalMedia.current?.getTracks().forEach((t) => t.stop());
+    externalMedia.current = undefined;
+    setExternalStream(undefined);
+  };
+  const disconnectExternal = () => {
+    input.setEnabled(false);
+    input.setAnalogHandler(undefined);
+    external.current?.dispose();
+    external.current = null;
+    stopCapture();
+    setExternalStill(undefined);
+    setExternalVersion("");
+  };
+  useEffect(() => {
+    if (!STANDALONE)
+      void storage
+        .getSetting<string>("ppssppEndpoint")
+        .then((value) => {
+          if (value) setExternalEndpoint(value);
+        })
+        .catch(() => {});
+  }, []);
+  const [headphones, setHeadphones] = useState(false);
+  const displayProfiles = useRef<Partial<Record<DeviceId, DisplayProfile>>>({});
+  const applyDisplay = (id: DeviceId) => {
+    const c = displayProfiles.current[id] ?? defaultDisplay();
+    setLight(c.light);
+    setMuted(c.muted);
+    setVolume(c.volume);
+    setHardwareValues(c.hardware ?? { contrast: 65, depth: 0 });
+    setHeadphones(c.headphones ?? false);
+  };
+  const [hardwareValues, setHardwareValues] = useState<Record<string, number>>({
+    contrast: 65,
+    depth: 0,
+  });
+  const museumRef = useRef(inMuseum);
+  museumRef.current = inMuseum;
+  const [deviceId, setDeviceId] = useState<DeviceId>(
+    routeDevice() || window.__POCKETSP_DEVICE__ || "sp",
+  );
+  const systemResources = useSystemResources(deviceId);
   const device = deviceById(deviceId),
     deviceRef = useRef<DeviceId>(deviceId);
   deviceRef.current = deviceId;
+  const selectedGames = useRef<Record<string, string>>({});
+  const selectionKey = (id: DeviceId) =>
+    id === "gb" ? "gb" : id === "ds" ? "nds" : "gba";
+  const settingKey = (id: DeviceId) =>
+    selectionKey(id) === "gba"
+      ? "selectedGame"
+      : `selectedGame:${selectionKey(id)}`;
+  const applyGame = (id: DeviceId) => {
+    const selected = selectedGames.current[selectionKey(id)];
+    setGame(games.find((g) => g.id === selected && acceptsGame(id, g)));
+  };
   const [games, setGames] = useState<Game[]>([]),
     [game, setGame] = useState<Game>(),
     [status, setStatus] = useState<Status>("off");
@@ -113,8 +224,10 @@ export default function App() {
   }, []);
   const native = useNativeSystem(
     deviceId,
-    ["running", "paused"].includes(status) &&
-      (!["sp", "gba"].includes(deviceId) || !game || STANDALONE),
+    !inMuseum &&
+      !externalVersion &&
+      ["running", "paused"].includes(status) &&
+      (!DEVICE_ADAPTERS[deviceId] || !game || STANDALONE),
     status !== "running" || closed || help || libraryOpen,
   );
   const nativeRef = useRef(native);
@@ -122,10 +235,16 @@ export default function App() {
   const input = useRef(
     new InputController(
       (button, down) => {
-        if (
-          statusRef.current === "running" &&
-          ["sp", "gba"].includes(deviceRef.current)
-        )
+        if (external.current) {
+          if (statusRef.current === "running" || !down) {
+            const client = external.current;
+            void client.input(button, down).catch((e) => {
+              if (external.current === client) report(e);
+            });
+          }
+          return;
+        }
+        if (statusRef.current === "running" && bridge.current)
           void bridge.current?.input(button, down).catch(report);
         if (!bridge.current) nativeRef.current.button(button, down);
       },
@@ -138,46 +257,80 @@ export default function App() {
     if (!b || !g || !["running", "paused"].includes(statusRef.current)) return;
     const data = await b.saveNative();
     if (data?.length) {
-      await storage.putSave(g.id, "native", data);
+      await storage.putSave(g.id, "native", data, coreFor(gameSystem(g)));
     }
     return data;
   }, []);
   useEffect(() => {
     mounted.current = true;
+    void restoreSystemResources();
     void (async () => {
       try {
         if (STANDALONE) {
+          try {
+            displayProfiles.current = JSON.parse(
+              localStorage.getItem("pocketsp:deviceDisplay:v1") || "{}",
+            );
+            applyDisplay(deviceRef.current);
+          } catch {}
           setHydrated(true);
           return;
         }
-        const response = await fetch("/roms/2048.gba");
-        if (!response.ok) throw new Error("演示游戏加载失败");
-        const bytes = new Uint8Array(await response.arrayBuffer());
-        const demo: Game = {
-          id: await identify(bytes),
-          name: "2048 Advance",
-          bytes,
-          demo: true,
-          importedAt: 0,
-        };
-        const [imported, selected, config] = await Promise.all([
-          storage.games(),
-          storage.getSetting<string>("selectedGame"),
-          storage.getSetting<{
-            light: boolean;
-            muted: boolean;
-            volume: number;
-          }>("display"),
-        ]);
+        const demos: Game[] = await Promise.all(
+          DEMOS.map(async (d) => {
+            const response = await fetch(d.url);
+            if (!response.ok) throw new Error("演示游戏加载失败");
+            const bytes = new Uint8Array(await response.arrayBuffer());
+            return {
+              id: await identify(bytes),
+              name: d.name,
+              system: d.system,
+              license: d.license,
+              bytes,
+              demo: true,
+              importedAt: 0,
+            };
+          }),
+        );
+        const [imported, selected, config, profiles, gbSelected, ndsSelected] =
+          await Promise.all([
+            storage.games(),
+            storage.getSetting<string>("selectedGame"),
+            storage.getSetting<{
+              light: boolean;
+              muted: boolean;
+              volume: number;
+            }>("display"),
+            storage.getSetting<Partial<Record<DeviceId, DisplayProfile>>>(
+              "deviceDisplay:v1",
+            ),
+            storage.getSetting<string>("selectedGame:gb"),
+            storage.getSetting<string>("selectedGame:nds"),
+          ]);
         if (!mounted.current) return;
-        const list = [demo, ...imported.filter((g) => g.id !== demo.id)];
+        const list = [
+          ...demos,
+          ...imported.filter((g) => !demos.some((d) => d.id === g.id)),
+        ];
+        selectedGames.current = {
+          gba: selected ?? "",
+          gb: gbSelected ?? "",
+          nds: ndsSelected ?? "",
+        };
         setGames(list);
-        setGame(list.find((g) => g.id === selected));
-        if (config) {
-          setLight(config.light);
-          setMuted(config.muted);
-          setVolume(config.volume);
-        }
+        setGame(
+          list.find(
+            (g) =>
+              g.id === selectedGames.current[selectionKey(deviceRef.current)] &&
+              acceptsGame(deviceRef.current, g),
+          ),
+        );
+        displayProfiles.current =
+          profiles ??
+          Object.fromEntries(
+            DEVICES.map((d) => [d.id, { ...defaultDisplay(), ...config }]),
+          );
+        applyDisplay(deviceRef.current);
         setHydrated(true);
       } catch (e) {
         report(e);
@@ -187,6 +340,8 @@ export default function App() {
       mounted.current = false;
       input.setEnabled(false);
       bridge.current?.dispose();
+      external.current?.dispose();
+      externalMedia.current?.getTracks().forEach((t) => t.stop());
       clearTimeout(toastTimer.current);
     };
   }, [input, report]);
@@ -202,17 +357,105 @@ export default function App() {
   }, [game, report]);
   useEffect(() => {
     input.releaseAll();
-    input.setEnabled(status !== "loading" && !closed && !help && !libraryOpen);
-  }, [status, closed, help, libraryOpen, input, deviceId]);
+    input.setEnabled(
+      !inMuseum &&
+        status !== "loading" &&
+        !closed &&
+        !help &&
+        !libraryOpen &&
+        !connectionOpen,
+    );
+  }, [
+    status,
+    closed,
+    help,
+    libraryOpen,
+    input,
+    deviceId,
+    inMuseum,
+    connectionOpen,
+  ]);
   useEffect(() => {
-    if (!hydrated || STANDALONE) return;
-    void storage.putSetting("display", { light, muted, volume }).catch(report);
+    if (!hydrated) return;
+    displayProfiles.current[deviceId] = {
+      light,
+      muted,
+      volume,
+      hardware: hardwareValues,
+      headphones,
+    };
+    if (STANDALONE) {
+      try {
+        localStorage.setItem(
+          "pocketsp:deviceDisplay:v1",
+          JSON.stringify(displayProfiles.current),
+        );
+      } catch {}
+    } else
+      void storage
+        .putSetting("deviceDisplay:v1", displayProfiles.current)
+        .catch(report);
     if (bridge.current && ["running", "paused"].includes(status))
       void bridge.current.volume(muted ? 0 : volume / 100).catch(report);
-  }, [light, muted, volume, status, hydrated, report]);
+  }, [
+    deviceId,
+    light,
+    muted,
+    volume,
+    hardwareValues,
+    headphones,
+    status,
+    hydrated,
+    report,
+  ]);
+  useEffect(() => {
+    audioManager.configure(
+      deviceId,
+      volume / 100,
+      muted,
+      native.state.prefs.keytone !== "Off",
+    );
+  }, [deviceId, volume, muted, native.state.prefs.keytone]);
+  useEffect(() => {
+    audioManager.setAmbience(
+      !inMuseum &&
+        deviceId === "vita" &&
+        status === "running" &&
+        !closed &&
+        native.state.phase !== "app" &&
+        native.state.phase !== "boot" &&
+        native.state.phase !== "lock" &&
+        native.state.prefs.music !== "Off",
+    );
+  }, [
+    inMuseum,
+    deviceId,
+    status,
+    closed,
+    native.state.phase,
+    native.state.prefs.music,
+  ]);
+  useEffect(() => {
+    const unlock = () => {
+      void audioManager.unlock().catch(() => {});
+    };
+    const hidden = () => {
+      audioManager.setVisible(!document.hidden);
+    };
+    window.addEventListener("pointerdown", unlock, true);
+    window.addEventListener("keydown", unlock, true);
+    document.addEventListener("visibilitychange", hidden);
+    return () => {
+      window.removeEventListener("pointerdown", unlock, true);
+      window.removeEventListener("keydown", unlock, true);
+      document.removeEventListener("visibilitychange", hidden);
+      audioManager.stop();
+    };
+  }, []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (
+        museumRef.current ||
         statusRef.current !== "running" ||
         closedRef.current ||
         helpRef.current
@@ -243,6 +486,8 @@ export default function App() {
     const blur = () => {
       focused.current = false;
       input.releaseAll();
+      if (deviceRef.current === "ds" && bridge.current)
+        void bridge.current.touch(0, 0, false).catch(report);
     };
     const focus = () => {
       focused.current = true;
@@ -289,7 +534,10 @@ export default function App() {
     return () => clearInterval(timer);
   }, [status, persistNative, report]);
   const stop = async () => {
+    if (statusRef.current === "running" && !bridge.current && !external.current)
+      void audioManager.play("shutdown");
     input.setEnabled(false);
+    if (external.current) disconnectExternal();
     try {
       await persistNative();
     } catch (e) {
@@ -325,16 +573,14 @@ export default function App() {
       if (statusRef.current !== "off" && statusRef.current !== "error") {
         await stop();
         notify(
-          bridge.current &&
-            ["sp", "gba"].includes(deviceRef.current) &&
-            !STANDALONE
+          bridge.current && !!DEVICE_ADAPTERS[deviceRef.current] && !STANDALONE
             ? "已保存原生存档 · 电源关闭"
             : "电源关闭",
         );
         return;
       }
       if (
-        !["sp", "gba"].includes(deviceRef.current) ||
+        !DEVICE_ADAPTERS[deviceRef.current] ||
         STANDALONE ||
         !gameRef.current
       ) {
@@ -360,7 +606,12 @@ export default function App() {
     if (!selected) return;
     try {
       const native = await storage.getSave(selected.id, "native");
-      await b.start(selected.bytes, selected.id, native?.data);
+      await b.start(
+        selected.bytes,
+        selected.id,
+        native?.data,
+        gameSystem(selected),
+      );
       if (bridge.current !== b) return;
       const s = soundRef.current;
       await b.volume(s.muted ? 0 : s.volume / 100);
@@ -382,13 +633,17 @@ export default function App() {
       await stop();
       setGame(next);
       setHasState(false);
-      await storage.putSetting("selectedGame", next.id);
+      selectedGames.current[selectionKey(deviceId)] = next.id;
+      await storage.putSetting(settingKey(deviceId), next.id);
       notify(`已插入 ${next.name}`);
     });
   const importFile = (file?: File) => {
     if (file)
       void guarded(async () => {
-        const imported = await importRom(file);
+        const imported = await importRom(
+          file,
+          DEVICE_ADAPTERS[deviceId]?.systems ?? [],
+        );
         await storage.putGame(imported);
         await stop();
         setGames((list) => [
@@ -396,15 +651,22 @@ export default function App() {
           imported,
         ]);
         setGame(imported);
-        await storage.putSetting("selectedGame", imported.id);
+        selectedGames.current[selectionKey(deviceId)] = imported.id;
+        await storage.putSetting(settingKey(deviceId), imported.id);
         notify("游戏已导入 · 文件仅保存在本机");
       });
   };
   const pause = () =>
     void guarded(async () => {
       const next = status === "running";
+      if (external.current) {
+        input.releaseAll();
+        await external.current.pause(next);
+        setStatus(next ? "paused" : "running");
+        return;
+      }
       if (
-        !["sp", "gba"].includes(deviceRef.current) ||
+        !DEVICE_ADAPTERS[deviceRef.current] ||
         STANDALONE ||
         !gameRef.current
       ) {
@@ -448,7 +710,7 @@ export default function App() {
       if (!b || !g) return;
       const data = await b.saveState();
       if (!data?.length) throw new Error("模拟器未返回即时存档");
-      await storage.putSave(g.id, "state", data);
+      await storage.putSave(g.id, "state", data, coreFor(gameSystem(g)));
       setHasState(true);
       notify("即时存档已保存 · 槽位 01");
     });
@@ -457,28 +719,167 @@ export default function App() {
       if (!game || !bridge.current) return;
       const save = await storage.getSave(game.id, "state");
       if (!save) throw new Error("这个游戏还没有即时存档");
+      if (save.core !== coreFor(gameSystem(game)) || save.version !== "4.2.3")
+        throw new Error("存档核心或版本与当前游戏不一致");
       input.releaseAll();
       await bridge.current.loadState(save.data);
       notify("即时存档已读取");
     });
   const switchDevice = (id: DeviceId) =>
     void guarded(async () => {
-      if (id === deviceId) return;
+      document.getElementById("device-picker")?.hidePopover();
+      if (id === deviceId && !inMuseum) return;
       await stop();
       setClosed(false);
       setFlat(false);
+      applyDisplay(id);
+      applyGame(id);
       setDeviceId(id);
+      setInMuseum(false);
+      setToolsOpen(false);
+      if (!(STANDALONE && !COLLECTION))
+        history[inMuseum ? "pushState" : "replaceState"](
+          {},
+          "",
+          `#/play/${id}`,
+        );
       setError("");
     });
+  const returnMuseum = () =>
+    void guarded(async () => {
+      await stop();
+      setInMuseum(true);
+      setToolsOpen(false);
+      history.pushState({}, "", location.pathname + location.search);
+    });
+  const routeRef = useRef(() => {});
+  routeRef.current = () =>
+    void guarded(async () => {
+      const id = routeDevice();
+      await stop();
+      setClosed(false);
+      setFlat(false);
+      setToolsOpen(false);
+      setInMuseum(!id);
+      if (id) {
+        applyDisplay(id);
+        applyGame(id);
+        setDeviceId(id);
+      }
+    });
+  useEffect(() => {
+    const changed = () => routeRef.current();
+    window.addEventListener("hashchange", changed);
+    return () => window.removeEventListener("hashchange", changed);
+  }, []);
+  const onTouch = useCallback(
+    (x: number, y: number, down: boolean) => {
+      if (bridge.current && statusRef.current === "running")
+        void bridge.current.touch(x, y, down).catch(report);
+    },
+    [report],
+  );
+  const connectExternal = () =>
+    void guarded(async () => {
+      if (location.protocol === "file:")
+        throw Error("连接模拟器请从 localhost 项目页面打开");
+      await stop();
+      const client = new PpssppClient(
+        (paused) => {
+          if (external.current === client)
+            setStatus(paused ? "paused" : "running");
+        },
+        (message) => {
+          if (external.current === client) {
+            disconnectExternal();
+            setStatus("off");
+            report(Error(message));
+          }
+        },
+      );
+      external.current = client;
+      try {
+        const version = await client.connect(externalEndpoint);
+        if (version.name !== "PPSSPP") throw Error("连接的服务不是 PPSSPP");
+        const [game, cpu] = await Promise.all([
+          client.request("game.status"),
+          client.request("cpu.status"),
+        ]);
+        setExternalVersion(String(version.version ?? "PPSSPP"));
+        setStatus(cpu.stepping === true ? "paused" : "running");
+        input.setAnalogHandler(
+          (x, y) =>
+            void client.analog(x, y).catch((e) => {
+              if (external.current === client) report(e);
+            }),
+        );
+        await storage.putSetting("ppssppEndpoint", externalEndpoint);
+        notify(
+          game.game ? "PPSSPP 已连接" : "已连接 PPSSPP；请在模拟器中打开程序",
+        );
+      } catch (e) {
+        disconnectExternal();
+        setStatus("off");
+        throw e;
+      }
+    });
+  const shareExternalWindow = async () => {
+    try {
+      if (!external.current) throw Error("请先连接 PPSSPP");
+      const owner = external.current;
+      if (!navigator.mediaDevices?.getDisplayMedia)
+        throw Error("此浏览器不支持窗口共享，请使用桌面版 Chrome 或 Edge");
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: "window", frameRate: { ideal: 30, max: 60 } },
+        audio: false,
+      });
+      if (!mounted.current || external.current !== owner) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      stopCapture();
+      externalMedia.current = stream;
+      setExternalStream(stream);
+      setExternalStill(undefined);
+      stream.getVideoTracks()[0]?.addEventListener("ended", () => {
+        if (externalMedia.current === stream) {
+          externalMedia.current = undefined;
+          setExternalStream(undefined);
+        }
+      });
+    } catch (e) {
+      report(e);
+    }
+  };
+  const adapter = DEVICE_ADAPTERS[deviceId];
+  if (inMuseum) return <MuseumHome onSelect={switchDevice} />;
   const ready = ["running", "paused"].includes(status),
     powered = status !== "off" && status !== "error";
   return (
-    <div className={`app studio-app`}>
+    <div
+      className={`app studio-app play-view ${toolsOpen ? "tools-open" : ""}`}
+      data-theme={deviceId}
+    >
+      <ThemeBackdrop device={deviceId} />
       <header className="studio-header">
+        {(!STANDALONE || COLLECTION) && (
+          <button
+            className="museum-back"
+            aria-label="返回博物馆"
+            onClick={returnMuseum}
+          >
+            <ArrowLeft size={17} />
+            博物馆
+          </button>
+        )}
         <a
           href={STANDALONE ? undefined : "/"}
           className="studio-brand"
           aria-label="Pocket Museum 首页"
+          onClick={(e) => {
+            e.preventDefault();
+            if (!STANDALONE || COLLECTION) returnMuseum();
+          }}
         >
           <svg
             width="35"
@@ -526,18 +927,35 @@ export default function App() {
           </span>
         </a>
         {(!STANDALONE || COLLECTION) && (
-          <nav className="handheld-switcher" aria-label="切换掌机">
-            {DEVICES.map((d) => (
-              <button
-                key={d.id}
-                aria-pressed={deviceId === d.id}
-                onClick={() => switchDevice(d.id)}
-                disabled={busy || status === "loading"}
-              >
-                {d.label}
-              </button>
-            ))}
-          </nav>
+          <div className="device-selector">
+            <button
+              popoverTarget="device-picker"
+              className="device-choice"
+              aria-label="切换掌机"
+            >
+              <img src={device.asset} alt="" />
+              {device.label}
+              <ChevronDown size={14} />
+            </button>
+            <nav
+              id="device-picker"
+              popover="auto"
+              className="handheld-switcher"
+              aria-label="切换掌机"
+            >
+              {DEVICES.map((d) => (
+                <button
+                  key={d.id}
+                  aria-pressed={deviceId === d.id}
+                  onClick={() => switchDevice(d.id)}
+                  disabled={busy || status === "loading"}
+                >
+                  <img src={d.asset} alt="" />
+                  {d.label}
+                </button>
+              ))}
+            </nav>
+          </div>
         )}
         <button
           className="help-button"
@@ -575,13 +993,15 @@ export default function App() {
               </span>
               <span>{device.faceLabels?.B || "B"} 键</span>
             </div>
-            <div>
-              <span>
-                <kbd>Q</kbd>
-                <kbd>E</kbd>
-              </span>
-              <span>L / R 肩键</span>
-            </div>
+            {device.keys.some((k) => k.button === "L") && (
+              <div>
+                <span>
+                  <kbd>Q</kbd>
+                  <kbd>E</kbd>
+                </span>
+                <span>L / R 肩键</span>
+              </div>
+            )}
             <div>
               <kbd className="wide">Enter</kbd>
               <span>START</span>
@@ -601,31 +1021,40 @@ export default function App() {
               </span>
             </div>
           )}
-          <div className={`gamepad-status ${pads ? "connected" : ""}`}>
-            <i />
-            <span>
-              {pads ? `已连接 ${pads} 个手柄` : "支持键盘、触摸与手柄"}
-            </span>
-          </div>
+          {pads > 0 && (
+            <div className="gamepad-status connected">
+              <i />
+              <span>已连接 {pads} 个手柄</span>
+            </div>
+          )}
         </aside>
         <section className="play-space" aria-label="掌机游玩区">
-          <div className="studio-halo" />
-          <div className="studio-floor" />
           <Console
             key={deviceId}
             cancelToken={`${help}:${libraryOpen}:${flat}`}
             device={device}
-            emulate={!STANDALONE && !!game}
-            nativeScreen={(index) => (
-              <NativeScreen
-                state={native.state}
-                chat={native.chat}
-                volume={muted ? 0 : volume / 100}
-                dispatch={native.dispatch}
-                screen={index}
-                onPowerOff={() => void guarded(stop)}
-              />
-            )}
+            emulate={!STANDALONE && !!game && acceptsGame(deviceId, game)}
+            onTouch={onTouch}
+            nativeScreen={(index) =>
+              externalVersion ? (
+                <ExternalScreen
+                  stream={externalStream}
+                  still={externalStill}
+                  crop={captureCrop}
+                  onError={report}
+                />
+              ) : (
+                <NativeScreen
+                  state={native.state}
+                  chat={native.chat}
+                  volume={muted ? 0 : volume / 100}
+                  headphones={headphones}
+                  dispatch={native.dispatch}
+                  screen={index}
+                  onPowerOff={() => void guarded(stop)}
+                />
+              )
+            }
             status={status}
             pressed={pressed}
             input={input}
@@ -638,10 +1067,18 @@ export default function App() {
             foldDisabled={busy}
             onLidMotion={() => input.releaseAll()}
             onMenu={() => {
+              if (external.current) {
+                notify("外部模拟器的 HOME/暂停菜单请在模拟器窗口操作");
+                return;
+              }
               if (statusRef.current === "running")
                 native.dispatch({ type: "home" });
             }}
             onVolume={(delta) => {
+              if (external.current) {
+                notify("连接模式音量由 PPSSPP 控制");
+                return;
+              }
               const next = Math.min(
                 100,
                 Math.max(0, (muted ? 0 : volume) + delta),
@@ -649,7 +1086,46 @@ export default function App() {
               setVolume(next);
               setMuted(next === 0);
             }}
-            onMute={() => setMuted(!muted)}
+            hardwareValues={{ ...hardwareValues, volume: muted ? 0 : volume }}
+            onHardwareValue={(id, value) => {
+              if (id === "volume") {
+                setVolume(value);
+                setMuted(value === 0);
+              } else {
+                setHardwareValues((v) => ({ ...v, [id]: value }));
+                if (id === "depth")
+                  notify("浏览器采用平面显示，当前不提供裸眼立体效果");
+              }
+            }}
+            onSound={(long) => {
+              if (external.current) {
+                notify("连接模式 SOUND 由 PPSSPP 控制");
+                return;
+              }
+              if (long) setMuted((v) => !v);
+              else if (
+                headphones &&
+                native.state.phase === "app" &&
+                native.state.category === 2 &&
+                native.state.app.includes("Memory Stick")
+              ) {
+                const current = native.state.prefs["sound-preset"] ?? "OFF",
+                  next =
+                    SOUND_PRESETS[
+                      (SOUND_PRESETS.indexOf(
+                        current as (typeof SOUND_PRESETS)[number],
+                      ) +
+                        1) %
+                        SOUND_PRESETS.length
+                    ];
+                native.dispatch({
+                  type: "set",
+                  key: "sound-preset",
+                  value: next,
+                });
+                notify(`音色 ${next}`);
+              } else notify("音色切换仅适用于耳机模式下的音乐播放");
+            }}
             session={session}
             onFrame={(frame) => void onFrame(frame)}
           />
@@ -657,33 +1133,47 @@ export default function App() {
         <aside className="settings-rail">
           <div className="rail-heading">
             <Sun size={21} />
-            <h2>掌机设置</h2>
-          </div>
-          <div className="sound-control">
+            <h2>控制</h2>
             <button
-              className="sound-toggle"
-              onClick={() => setMuted(!muted)}
-              aria-label={muted ? "开启声音" : "静音"}
+              className="close-tools"
+              aria-label="关闭操作菜单"
+              onClick={() => setToolsOpen(false)}
             >
-              {muted ? <VolumeX size={22} /> : <Volume2 size={22} />}
+              <X size={19} />
             </button>
-            <div>
-              <span>音量</span>
-              <input
-                className="volume-slider"
-                type="range"
-                aria-label="游戏音量"
-                min="0"
-                max="100"
-                value={muted ? 0 : volume}
-                onChange={(e) => {
-                  setVolume(+e.target.value);
-                  setMuted(+e.target.value === 0);
-                }}
-              />
-            </div>
-            <small>{muted ? "0" : volume}</small>
           </div>
+          {externalVersion ? (
+            <p className="external-audio-note">音量在 PPSSPP 中调整</p>
+          ) : (
+            <div className="sound-control">
+              <button
+                className="sound-toggle"
+                onClick={() => setMuted(!muted)}
+                aria-label={muted ? "开启声音" : "静音"}
+              >
+                {muted ? <VolumeX size={22} /> : <Volume2 size={22} />}
+              </button>
+              <div>
+                <span>音量</span>
+                <input
+                  className="volume-slider"
+                  type="range"
+                  aria-label="游戏音量"
+                  min="0"
+                  max="100"
+                  value={muted ? 0 : volume}
+                  style={{
+                    background: `linear-gradient(to right, var(--accent) ${muted ? 0 : volume}%, #e8e1d7 ${muted ? 0 : volume}%)`,
+                  }}
+                  onChange={(e) => {
+                    setVolume(+e.target.value);
+                    setMuted(+e.target.value === 0);
+                  }}
+                />
+              </div>
+              <small>{muted ? "0" : volume}</small>
+            </div>
+          )}
           <button
             className="setting-row"
             onClick={() => setLight(!light)}
@@ -748,9 +1238,7 @@ export default function App() {
             </span>
             <ChevronRight size={15} />
           </button>
-          {["3ds", "psp", "vita"].includes(deviceId) && (
-            <MediaImport device={deviceId} onDone={notify} onError={report} />
-          )}
+
           <div className="rail-separator" />
           <button
             className="setting-row"
@@ -763,35 +1251,127 @@ export default function App() {
               {status === "paused" ? "继续游戏" : "暂停游戏"}
             </span>
           </button>
-          <button
-            className="setting-row"
-            onClick={quickSave}
-            disabled={
-              !ready || busy || !["sp", "gba"].includes(deviceId) || STANDALONE
-            }
-          >
-            <span>
-              <Save size={20} />
-              即时存档
-            </span>
-          </button>
-          <button
-            className="setting-row"
-            onClick={quickLoad}
-            disabled={
-              !ready ||
-              !hasState ||
-              busy ||
-              !["sp", "gba"].includes(deviceId) ||
-              STANDALONE
-            }
-          >
-            <span>
-              <RotateCcw size={19} />
-              读取存档
-            </span>
-            {hasState && <i className="state-dot" />}
-          </button>
+          {!STANDALONE && !!DEVICE_ADAPTERS[deviceId] && (
+            <>
+              <button
+                className="setting-row"
+                onClick={quickSave}
+                disabled={
+                  !ready ||
+                  !bridge.current ||
+                  busy ||
+                  !DEVICE_ADAPTERS[deviceId] ||
+                  STANDALONE
+                }
+              >
+                <span>
+                  <Save size={20} />
+                  即时存档
+                </span>
+              </button>
+              <button
+                className="setting-row"
+                onClick={quickLoad}
+                disabled={
+                  !ready ||
+                  !hasState ||
+                  !bridge.current ||
+                  busy ||
+                  !DEVICE_ADAPTERS[deviceId] ||
+                  STANDALONE
+                }
+              >
+                <span>
+                  <RotateCcw size={19} />
+                  读取存档
+                </span>
+                {hasState && <i className="state-dot" />}
+              </button>
+            </>
+          )}
+          <details className="more-controls">
+            <summary>更多</summary>
+            <div>
+              {!STANDALONE && deviceId === "psp" && (
+                <button
+                  className="setting-row"
+                  onClick={() => setConnectionOpen(true)}
+                >
+                  {externalVersion ? "模拟器连接" : "连接模拟器"}
+                </button>
+              )}
+              {["3ds", "psp", "vita"].includes(deviceId) && (
+                <>
+                  <label className="setting-row system-resources-import">
+                    导入系统资源文件夹
+                    <input
+                      type="file"
+                      multiple
+                      {...{ webkitdirectory: "" }}
+                      aria-label="导入系统资源"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files ?? []);
+                        e.target.value = "";
+                        if (files.length)
+                          void importSystemResources(files, deviceId)
+                            .then(() => notify("系统资源已加载，仅保存在本机"))
+                            .catch(report);
+                      }}
+                    />
+                  </label>
+                  {systemResources && (
+                    <button
+                      className="setting-row"
+                      onClick={() =>
+                        void clearSystemResources(deviceId)
+                          .then(() => notify("已恢复内置重建素材"))
+                          .catch(report)
+                      }
+                    >
+                      恢复内置素材
+                    </button>
+                  )}
+                </>
+              )}
+              {deviceId === "psp" && (
+                <label className="headphone-option">
+                  <input
+                    type="checkbox"
+                    checked={headphones}
+                    onChange={(e) => setHeadphones(e.target.checked)}
+                  />
+                  耳机模式（手动）
+                </label>
+              )}
+              {["3ds", "psp", "vita"].includes(deviceId) && (
+                <MediaImport
+                  device={deviceId}
+                  onDone={notify}
+                  onError={report}
+                />
+              )}
+              <button className="setting-row" onClick={() => setHelp(true)}>
+                键位与使用指南
+              </button>
+              {!STANDALONE && (
+                <a
+                  className="setting-row"
+                  href={`/standalone/${deviceId}.html`}
+                  download
+                >
+                  下载单文件版
+                </a>
+              )}
+              {(STANDALONE ||
+                (!DEVICE_ADAPTERS[deviceId] && !externalVersion)) && (
+                <p className="support-note">
+                  {STANDALONE
+                    ? "离线版包含机身与系统界面，不含游戏核心。"
+                    : "本机型目前提供系统界面，游戏核心尚未接入。"}
+                </p>
+              )}
+            </div>
+          </details>
         </aside>
       </main>
       <div className="studio-dock">
@@ -804,25 +1384,30 @@ export default function App() {
           <Power size={17} />
           <span>{powered ? "关闭电源" : "开启电源"}</span>
         </button>
-        <span className="dock-divider" />
-        <button
-          className="cartridge-button"
-          aria-label="选择卡带"
-          disabled={!["sp", "gba"].includes(deviceId) || STANDALONE}
-          onClick={() => setLibraryOpen(true)}
-        >
-          <FolderOpen size={17} />
-          <span>{game ? "更换卡带" : "选择卡带"}</span>
-          <ChevronDown size={12} />
-        </button>
-        {["sp", "gba"].includes(deviceId) && game && !STANDALONE && (
+        {!STANDALONE && !!DEVICE_ADAPTERS[deviceId] && (
+          <>
+            <span className="dock-divider" />
+            <button
+              className="cartridge-button"
+              aria-label="选择卡带"
+              disabled={!DEVICE_ADAPTERS[deviceId] || STANDALONE}
+              onClick={() => setLibraryOpen(true)}
+            >
+              <FolderOpen size={17} />
+              <span>{game ? "更换卡带" : "选择卡带"}</span>
+              <ChevronDown size={12} />
+            </button>
+          </>
+        )}
+        {!!DEVICE_ADAPTERS[deviceId] && game && !STANDALONE && (
           <button
             className="eject-button"
             onClick={() =>
               void guarded(async () => {
                 await stop();
                 setGame(undefined);
-                await storage.putSetting("selectedGame", "");
+                selectedGames.current[selectionKey(deviceId)] = "";
+                await storage.putSetting(settingKey(deviceId), "");
               })
             }
           >
@@ -830,28 +1415,152 @@ export default function App() {
           </button>
         )}
         <span className="dock-divider" />
+        <button
+          className="mobile-tools-button"
+          aria-label="操作与设置"
+          aria-expanded={toolsOpen}
+          onClick={() => setToolsOpen((v) => !v)}
+        >
+          <SlidersHorizontal size={18} />
+        </button>
         <span
           className={`status-chip ${status}`}
           role="status"
           data-testid="emulator-status"
         >
           <i />
-          {(!["sp", "gba"].includes(deviceId) || STANDALONE || !game) &&
-          status === "running"
-            ? "系统运行"
-            : STATUS[status]}
+          {externalVersion
+            ? `PPSSPP · ${status === "paused" ? "已暂停" : "已连接"}`
+            : (!DEVICE_ADAPTERS[deviceId] || STANDALONE || !game) &&
+                status === "running"
+              ? "系统运行"
+              : STATUS[status]}
         </span>
       </div>
-      {!STANDALONE && (
-        <a
-          className="standalone-link"
-          href={`/standalone/${deviceId}.html`}
-          download
+      {connectionOpen && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setConnectionOpen(false)}
         >
-          单文件版 <ArrowUpFromLine size={13} />
-        </a>
+          <section
+            className="connection-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="连接模拟器"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="modal-close"
+              aria-label="关闭连接面板"
+              onClick={() => setConnectionOpen(false)}
+            >
+              <X size={20} />
+            </button>
+            <h2>连接 PPSSPP</h2>
+            {error && (
+              <p role="alert" className="connection-error">
+                {error}
+              </p>
+            )}
+            <p>
+              在 PPSSPP 的 Tools → Developer Tools 开启 Allow remote
+              debugger，填写其本地服务端口。
+            </p>
+            <label>
+              WebSocket 地址
+              <input
+                aria-label="模拟器地址"
+                type="url"
+                value={externalEndpoint}
+                disabled={!!externalVersion || busy}
+                onChange={(e) => setExternalEndpoint(e.target.value)}
+              />
+            </label>
+            {!externalVersion ? (
+              <button
+                className="connection-primary"
+                onClick={connectExternal}
+                disabled={busy}
+              >
+                连接
+              </button>
+            ) : (
+              <>
+                <p className="connection-status">
+                  已连接 PPSSPP {externalVersion}
+                </p>
+                <button
+                  className="connection-primary"
+                  onClick={() => void shareExternalWindow()}
+                >
+                  共享模拟器窗口
+                </button>
+                <p>
+                  选择模拟器窗口后，实时画面显示在掌机屏幕中；声音由 PPSSPP
+                  播放。机身按键、键盘和手柄可以控制模拟器。
+                </p>
+                {externalStream && (
+                  <fieldset className="capture-crop">
+                    <legend>裁去窗口边框（百分比）</legend>
+                    {(["left", "top", "right", "bottom"] as const).map(
+                      (key, i) => (
+                        <label key={key}>
+                          {["左", "上", "右", "下"][i]}
+                          <input
+                            type="number"
+                            min="0"
+                            max="40"
+                            aria-label={`裁剪${["左", "上", "右", "下"][i]}边`}
+                            value={captureCrop[key]}
+                            onChange={(e) =>
+                              setCaptureCrop((v) => ({
+                                ...v,
+                                [key]: Math.max(
+                                  0,
+                                  Math.min(40, Number(e.target.value) || 0),
+                                ),
+                              }))
+                            }
+                          />
+                        </label>
+                      ),
+                    )}
+                  </fieldset>
+                )}
+                <button
+                  onClick={() =>
+                    void guarded(async () => {
+                      if (!external.current) return;
+                      await external.current.pause(true);
+                      setExternalStill(
+                        await external.current.pausedScreenshot(),
+                      );
+                      notify("已暂停并抓取画面");
+                    })
+                  }
+                  disabled={busy}
+                >
+                  抓取暂停画面
+                </button>
+                <button
+                  onClick={() => {
+                    disconnectExternal();
+                    setStatus("off");
+                  }}
+                >
+                  断开连接
+                </button>
+              </>
+            )}
+            <p className="support-note">
+              此入口连接本地 PSP
+              模拟器，不下载固件、ROM，也不代替浏览器内置核心。3DS / Vita
+              尚无已适配的外部连接接口。
+            </p>
+          </section>
+        </div>
       )}
-      {error && (
+      {error && !connectionOpen && (
         <div className="error-banner" role="alert">
           <CircleHelp size={17} />
           <span>{error}</span>
@@ -888,45 +1597,58 @@ export default function App() {
               <X size={20} />
             </button>
             <h2>选择一张卡带</h2>
-            <p>导入本地 .gba 文件，或使用开源演示卡带。</p>
+            <p>
+              导入本地 {adapter?.extensions.replaceAll(",", " / ")}{" "}
+              文件，或使用开源演示卡带。
+            </p>
+            {deviceId === "gb" && (
+              <p>
+                GBC 使用兼容模式运行，机身仍为 DMG-01；GB Snake 先按两次 Start
+                开始。
+              </p>
+            )}
             <div className="game-list">
-              {games.map((g) => (
-                <button
-                  key={g.id}
-                  onClick={() => {
-                    selectGame(g);
-                    setLibraryOpen(false);
-                  }}
-                  disabled={busy || status === "loading"}
-                  className={`game-card ${game?.id === g.id ? "selected" : ""}`}
-                  aria-pressed={game?.id === g.id}
-                >
-                  <span className="cartridge-art">
-                    <Gamepad2 size={28} />
-                  </span>
-                  <span>
-                    <h3>{g.name}</h3>
-                    <small>
-                      {g.demo ? "开源演示 · CC0" : "本地卡带 · GBA"}
-                    </small>
-                  </span>
-                  {game?.id === g.id ? (
-                    <Check size={17} />
-                  ) : (
-                    <ChevronRight size={16} />
-                  )}
-                </button>
-              ))}
+              {games
+                .filter((g) => acceptsGame(deviceId, g))
+                .map((g) => (
+                  <button
+                    key={g.id}
+                    onClick={() => {
+                      selectGame(g);
+                      setLibraryOpen(false);
+                    }}
+                    disabled={busy || status === "loading"}
+                    className={`game-card ${game?.id === g.id ? "selected" : ""}`}
+                    aria-pressed={game?.id === g.id}
+                  >
+                    <span className="cartridge-art">
+                      <Gamepad2 size={28} />
+                    </span>
+                    <span>
+                      <h3>{g.name}</h3>
+                      <small>
+                        {g.demo
+                          ? `开源演示 · ${g.license ?? "CC0"}`
+                          : `本地卡带 · ${gameSystem(g).toUpperCase()}`}
+                      </small>
+                    </span>
+                    {game?.id === g.id ? (
+                      <Check size={17} />
+                    ) : (
+                      <ChevronRight size={16} />
+                    )}
+                  </button>
+                ))}
             </div>
             <label
               className={`import-button ${busy || status === "loading" ? "disabled" : ""}`}
             >
               <Plus size={18} />
-              导入 .gba 文件
+              导入 {adapter?.extensions.replaceAll(",", " / ")} 文件
               <input
-                aria-label="导入 GBA 游戏"
+                aria-label={`导入 ${adapter?.label} 游戏`}
                 type="file"
-                accept=".gba"
+                accept={adapter?.extensions}
                 disabled={busy || status === "loading"}
                 onChange={(e) => {
                   importFile(e.target.files?.[0]);
@@ -938,8 +1660,9 @@ export default function App() {
               <button
                 disabled={
                   !ready ||
+                  !bridge.current ||
                   busy ||
-                  !["sp", "gba"].includes(deviceId) ||
+                  !DEVICE_ADAPTERS[deviceId] ||
                   STANDALONE
                 }
                 onClick={() =>
@@ -947,36 +1670,45 @@ export default function App() {
                     const data = await persistNative();
                     if (!data?.length)
                       throw new Error("尚无原生存档，请先在游戏内保存");
-                    download(data, `${game?.name}.sav`);
+                    download(
+                      data,
+                      `${game?.name}.${adapter?.core === "desmume" ? "dsv" : "sav"}`,
+                    );
                     notify("原生存档已导出");
                   })
                 }
               >
                 <ArrowUpFromLine size={14} />
-                导出 .sav
+                导出 .{adapter?.core === "desmume" ? "dsv" : "sav"}
               </button>
               <label className={!ready || busy ? "disabled" : ""}>
                 <FolderOpen size={14} />
-                导入 .sav
+                导入 .{adapter?.core === "desmume" ? "dsv" : "sav"}
                 <input
                   aria-label="导入原生存档"
                   type="file"
-                  accept=".sav,.srm"
+                  accept={adapter?.core === "desmume" ? ".dsv" : ".sav,.srm"}
                   disabled={
                     !ready ||
+                    !bridge.current ||
                     busy ||
-                    !["sp", "gba"].includes(deviceId) ||
+                    !DEVICE_ADAPTERS[deviceId] ||
                     STANDALONE
                   }
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file)
                       void guarded(async () => {
-                        if (file.size === 0 || file.size > 1024 * 1024)
+                        if (file.size === 0 || file.size > 16 * 1024 * 1024)
                           throw new Error("存档大小无效");
                         const data = new Uint8Array(await file.arrayBuffer());
                         await bridge.current?.loadNative(data);
-                        await storage.putSave(game!.id, "native", data);
+                        await storage.putSave(
+                          game!.id,
+                          "native",
+                          data,
+                          coreFor(gameSystem(game!)),
+                        );
                         notify("原生存档已导入，重新开机后读取");
                       });
                     e.target.value = "";
@@ -986,7 +1718,7 @@ export default function App() {
             </div>
             <p className="library-note">
               <ShieldCheck size={14} />
-              最大 32 MB · 卡带与存档仅保存在当前浏览器
+              最大 {adapter?.maxMiB} MB · 卡带与存档仅保存在当前浏览器
             </p>
             <a href="/licenses/NOTICE.md" target="_blank" rel="noreferrer">
               游戏来源与开源许可 ↗
@@ -1015,11 +1747,11 @@ export default function App() {
             >
               <X size={20} />
             </button>
-            <h2>打开，按下，开始。</h2>
+            <h2>使用指南</h2>
             <p>
-              {STANDALONE || !["sp", "gba"].includes(deviceId)
+              {STANDALONE || !DEVICE_ADAPTERS[deviceId]
                 ? "开机后进入当前机型的无卡启动页或系统界面。DS / 3DS 的下屏和 Vita 屏幕支持触摸，HOME / PS 键按各自系统流程返回。"
-                : "选择卡带或导入你有权使用的 .gba 游戏，然后按下电源。屏幕在关机时保持空白。"}
+                : "选择卡带或导入你有权使用的游戏，然后按下电源。屏幕在关机时保持空白。"}
             </p>
             <ol>
               <li>
@@ -1029,7 +1761,7 @@ export default function App() {
                   是 Start，Shift 是 Select。鼠标或触摸可以直接按机身按钮。
                 </p>
               </li>
-              {!STANDALONE && ["sp", "gba"].includes(deviceId) && (
+              {!STANDALONE && !!DEVICE_ADAPTERS[deviceId] && (
                 <li>
                   <b>游戏存档</b>
                   <p>
@@ -1048,7 +1780,8 @@ export default function App() {
               </li>
             </ol>
             <p className="help-note">
-              声音默认静音。合盖会暂停运行。清除浏览器数据会移除卡带和存档，请导出备份。
+              声音默认静音。DS / 3DS 合盖睡眠，SP
+              合盖继续运行。清除浏览器数据会移除卡带和存档，请导出备份。
             </p>
             {!STANDALONE && (
               <a href="/licenses/NOTICE.md" target="_blank" rel="noreferrer">

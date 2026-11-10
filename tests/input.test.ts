@@ -68,6 +68,29 @@ describe("physical input arbitration", () => {
   });
 });
 describe("input and physical feedback are separate", () => {
+  it("keeps native analog input separate from D-pad and resumes the same vector after blur", () => {
+    const emit = vi.fn(),
+      axis = vi.fn(),
+      c = new InputController(emit);
+    c.setAnalogHandler(axis);
+    c.setEnabled(true);
+    c.analog("stick:left", 0.7, -0.5);
+    c.analog("stick:left", 0.7, -0.5);
+    expect(axis.mock.calls).toEqual([[0.7, -0.5]]);
+    expect(emit).not.toHaveBeenCalled();
+    c.set("pointer:1", "Up", true);
+    c.setEnabled(false);
+    expect(axis.mock.lastCall).toEqual([0, 0]);
+    expect(emit.mock.lastCall).toEqual(["Up", false]);
+    c.setEnabled(true);
+    c.analog("stick:left", 0.7, -0.5);
+    expect(axis.mock.lastCall).toEqual([0.7, -0.5]);
+    c.analog("pad:0:axis", -0.9, 0);
+    c.releasePrefix("pad:0:");
+    expect(axis.mock.lastCall).toEqual([0.7, -0.5]);
+    c.releaseAll();
+    expect(axis.mock.lastCall).toEqual([0, 0]);
+  });
   it("stick movement reaches logical input while only independent digital owners animate the D-pad", () => {
     const emit = vi.fn(),
       change = vi.fn(),

@@ -74,3 +74,25 @@ describe("iframe protocol", () => {
     vi.useRealTimers();
   });
 });
+
+it("accepts bounded DS touch and rejects unknown systems and non-finite coordinates", () => {
+  expect(isCommand({ type: "touch", x: 0.83, y: 0.5, down: true })).toBe(true);
+  for (const x of [-0.1, 1.1, Infinity, NaN])
+    expect(isCommand({ type: "touch", x, y: 0.5, down: false })).toBe(false);
+  expect(
+    isCommand({
+      type: "start",
+      rom: new Uint8Array(512),
+      gameId: "a".repeat(64),
+      system: "psp",
+    }),
+  ).toBe(false);
+  expect(
+    isCommand({
+      type: "start",
+      rom: new Uint8Array(512),
+      gameId: "a".repeat(64),
+      system: "nds",
+    }),
+  ).toBe(true);
+});

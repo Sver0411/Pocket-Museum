@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import type { Page, Frame } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 async function boot(page: Page) {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await expect(page.locator(".power-button")).toBeEnabled();
   await page.getByRole("button", { name: "选择卡带", exact: true }).click();
   await page.getByRole("button", { name: /2048 Advance/ }).click();
@@ -163,7 +163,7 @@ test("ROM import stays local, persists, and invalid files show actionable errors
   page.on("request", (r) => {
     if (r.method() === "POST") posts.push(r.url());
   });
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await expect(page.locator(".power-button")).toBeEnabled();
   await page.getByRole("button", { name: "选择卡带" }).click();
   await page.getByLabel("导入 GBA 游戏", { exact: true }).setInputFiles({
@@ -254,7 +254,7 @@ test("mobile layout fits and multi-touch, cancellation, gamepad polling reach th
       ],
     }),
   );
-  await expect(page.getByText("已连接 1 个手柄")).toBeVisible();
+  await expect(page.locator(".gamepad-status.connected")).toHaveCount(1);
   await expect
     .poll(() => frame.evaluate(() => (window as any).__inputs))
     .toContainEqual([0, 8, 1]);
@@ -267,7 +267,7 @@ test("mobile layout fits and multi-touch, cancellation, gamepad polling reach th
       value: () => [],
     }),
   );
-  await expect(page.getByText("支持键盘、触摸与手柄")).toBeVisible();
+  await expect(page.locator(".gamepad-status.connected")).toHaveCount(0);
   await expect(page.locator('[data-button="A"]')).toHaveAttribute(
     "aria-pressed",
     "false",
@@ -283,10 +283,10 @@ test("mobile layout fits and multi-touch, cancellation, gamepad polling reach th
   });
 });
 
-test("dark studio UI keeps an empty screen, unified controls and no Nintendo logo", async ({
+test("cream studio UI keeps an empty screen, unified controls and no Nintendo logo", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await expect(page.locator(".power-button")).toBeEnabled();
   await expect(page.locator(".screen-idle")).toBeVisible();
   await expect(page.locator(".screen-idle")).toHaveText("");

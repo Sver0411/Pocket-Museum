@@ -1,3 +1,4 @@
+import { selectDevice } from "./helpers";
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 const devices = [
@@ -10,10 +11,7 @@ const devices = [
   ["vita", "PS Vita"],
 ] as const;
 async function select(page: Page, name: string) {
-  await page
-    .getByRole("navigation", { name: "切换掌机" })
-    .getByRole("button", { name, exact: true })
-    .click();
+  await selectDevice(page, name);
 }
 async function boot(page: Page, name: string) {
   await select(page, name);
@@ -50,7 +48,7 @@ test("all seven machines show their own cartridge-free startup and main screens"
     )
       external.push(r.url());
   });
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   for (const [id, name] of devices) {
     await boot(page, name);
     await expect(page.locator("iframe")).toHaveCount(0);
@@ -73,7 +71,7 @@ test("all seven machines show their own cartridge-free startup and main screens"
 test("DS touch menu, local PictoChat, settings persistence and real Quit power-off flow", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await boot(page, "DS");
   await page.getByRole("button", { name: "PICTOCHAT", exact: false }).click();
   await page.getByRole("button", { name: "CHAT ROOM A", exact: false }).click();
@@ -98,12 +96,15 @@ test("DS touch menu, local PictoChat, settings persistence and real Quit power-o
 test("3DS HOME selection, settings, suspension and icon layout follow the native flow", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await boot(page, "3DS");
   await physical(page, "Right");
-  await expect(page.locator(".three-title")).toHaveText(
-    "Health and Safety Information",
-  );
+  await expect(page.locator(".three-title")).toContainText("3DS Camera");
+  await page
+    .getByRole("button", { name: "Screen brightness", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Brightness 4", exact: true }).click();
+  await page.getByRole("button", { name: "Ⓐ OK", exact: true }).click();
   await page.getByRole("button", { name: "Increase icon rows" }).click();
   await expect(page.locator(".three-grid-viewport")).toHaveClass(/rows-2/);
   await page
@@ -114,8 +115,10 @@ test("3DS HOME selection, settings, suspension and icon layout follow the native
   await page
     .getByRole("button", { name: "Other Settings", exact: true })
     .click();
-  await page.getByRole("button", { name: /Screen Brightness/ }).click();
-  await page.getByRole("button", { name: "○ 4", exact: true }).click();
+  await page.getByRole("button", { name: /Date & Time/ }).click();
+  await page
+    .getByLabel("Date & Time", { exact: true })
+    .fill("2026-11-10T10:30");
   await page.getByRole("button", { name: "OK", exact: true }).click();
   await physical(page, "Home");
   await expect(page.getByTestId("native-screen-0")).toHaveAttribute(
@@ -123,14 +126,25 @@ test("3DS HOME selection, settings, suspension and icon layout follow the native
     "app",
   );
   await physical(page, "B");
+  await page
+    .getByRole("button", { name: "Data Management", exact: true })
+    .click();
+  await expect(page.locator(".three-data-management")).toBeVisible();
+  await expect(
+    page.locator(".three-data-management").getByRole("button"),
+  ).toHaveCount(5);
+  await physical(page, "B");
   await physical(page, "B");
   await expect(page.getByTestId("native-screen-0")).toHaveAttribute(
     "data-system-phase",
     "home",
   );
-  await page
-    .getByRole("button", { name: "Health and Safety Information", exact: true })
-    .click();
+  const health = page.getByRole("button", {
+    name: "Health and Safety Information",
+    exact: true,
+  });
+  if (!(await health.getAttribute("class"))?.includes("selected"))
+    await health.click();
   await page.getByRole("button", { name: "Open", exact: true }).click();
   await physical(page, "Home");
   await expect(
@@ -145,7 +159,7 @@ test("3DS HOME selection, settings, suspension and icon layout follow the native
 test("PSP physical D-pad navigates XMB settings and editing, Back returns to the same XMB item", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await boot(page, "PSP");
   for (let i = 0; i < 5; i++) await physical(page, "Down");
   await expect(page.locator(".xmb-items>.selected")).toContainText(
@@ -171,7 +185,7 @@ test("PSP physical D-pad navigates XMB settings and editing, Back returns to the
 test("Vita unlock, bubbles, LiveArea, native PS transitions, page swipe and app close", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await boot(page, "PS Vita");
   await page.getByRole("button", { name: "Browser", exact: true }).click();
   await expect(page.locator(".vita-live")).toBeVisible();
@@ -194,7 +208,9 @@ test("Vita unlock, bubbles, LiveArea, native PS transitions, page swipe and app 
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.getByRole("button", { name: "Language", exact: true }).click();
   await page.getByRole("button", { name: /System Language/ }).click();
-  await page.getByRole("button", { name: "○ 简体中文", exact: true }).click();
+  await expect(page.locator(".native-dialog")).toContainText(
+    "Other system languages are not implemented",
+  );
   await page.getByRole("button", { name: "OK", exact: true }).click();
   await physical(page, "Home");
   await page
@@ -209,7 +225,7 @@ test("Vita unlock, bubbles, LiveArea, native PS transitions, page swipe and app 
 test("each D-pad depresses its loaded edge, with distinct opposite transforms on all seven shells", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await expect(page.locator(".power-button")).toBeEnabled();
   for (const [id, name] of devices) {
     await select(page, name);

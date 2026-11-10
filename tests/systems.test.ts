@@ -94,6 +94,18 @@ describe("native handheld startup and navigation", () => {
   });
 });
 describe("effective system settings", () => {
+  it("3DS Profile is a nested page and brightness stays in the HOME menu", () => {
+    let s = reduce(boot("3ds"), { type: "open", app: "settings" });
+    s = reduce(s, { type: "section", name: "Other Settings" });
+    s = button(s, "A");
+    expect(s.section).toBe("Profile");
+    s = button(s, "A");
+    expect(s.editor).toBe("nickname");
+    s = button(s, "B");
+    s = button(s, "B");
+    expect(s.section).toBe("Other Settings");
+    expect(s.selection).toBe(0);
+  });
   it("manual clock settings are applied and invalid dates do not silently roll over", () => {
     let s = reduce(boot("ds"), { type: "open", app: "settings" });
     s = reduce(s, { type: "section", name: "Clock" });

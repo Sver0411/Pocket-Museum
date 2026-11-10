@@ -8,13 +8,13 @@ export interface AppIcon {
   color: string;
 }
 export const APPS_3DS: AppIcon[] = [
-  { id: "card", name: "Game Card", icon: "card", color: "#969da3" },
   {
     id: "health",
     name: "Health and Safety Information",
     icon: "health",
     color: "#eebc00",
   },
+  { id: "card", name: "Game Card", icon: "card", color: "#969da3" },
   { id: "camera", name: "3DS Camera", icon: "camera", color: "#ed9836" },
   { id: "sound", name: "3DS Sound", icon: "sound", color: "#638acb" },
   { id: "mii", name: "Mii Maker", icon: "mii", color: "#77b485" },
@@ -131,7 +131,6 @@ export interface Setting {
 }
 export const SETTINGS: Record<string, Setting[]> = {
   "System Settings": [
-    { key: "birthday", label: "Your Birth Date", values: ["2000-01-01"] },
     { key: "format", label: "Format Memory Stick™", values: ["Format"] },
     { key: "wma", label: "Enable WMA Playback", values: ["Off", "On"] },
     { key: "flash", label: "Enable Flash® Player", values: ["Off", "On"] },
@@ -499,19 +498,41 @@ export const THREE_SETTINGS: Record<string, Setting[]> = {
     },
   ],
   "Data Management": [
-    { key: "software", label: "3DS Software", values: ["No software data."] },
-    { key: "extra", label: "Extra Data", values: ["No extra data."] },
+    {
+      key: "software",
+      label: "3DS",
+      values: ["No 3DS software is installed in this browser."],
+    },
     { key: "dsiware", label: "DSiWare", values: ["No software data."] },
+    {
+      key: "streetpass-manage",
+      label: "StreetPass Management",
+      values: [
+        "StreetPass hardware communication is not available in this browser.",
+      ],
+    },
+    {
+      key: "blocked-users",
+      label: "Reset blocked-user settings",
+      values: [
+        "Original blocked-user settings are not available in this browser.",
+      ],
+    },
   ],
   "Other Settings": [
-    { key: "nickname", label: "Profile", values: ["Player", "Pocket"] },
+    { key: "profile", label: "Profile", values: [] },
     { key: "date", label: "Date & Time", values: ["Set Date and Time"] },
-    {
-      key: "brightness",
-      label: "Screen Brightness",
-      values: ["1", "2", "3", "4", "5"],
-    },
+    { key: "calibrate", label: "Touch Screen", values: ["Calibrate"] },
+    { key: "3d", label: "3D Calibration", values: ["Calibrate"] },
     { key: "sound", label: "Sound", values: ["Surround", "Stereo", "Mono"] },
+    { key: "mic-test", label: "Mic Test", values: ["Test"] },
+    { key: "outer-camera", label: "Outer Cameras", values: ["Calibrate"] },
+    { key: "circle-pad", label: "Circle Pad", values: ["Calibrate"] },
+    {
+      key: "transfer",
+      label: "System Transfer",
+      values: ["Transfer from a 3DS System", "Transfer from a DSi System"],
+    },
     {
       key: "language",
       label: "Language",
@@ -526,19 +547,22 @@ export const THREE_SETTINGS: Record<string, Setting[]> = {
         "Русский",
       ],
     },
-    { key: "calibrate", label: "Touch Screen", values: ["Calibrate"] },
-    { key: "3d", label: "3D Calibration", values: ["Calibrate"] },
-    { key: "mic-test", label: "Mic Test", values: ["Test"] },
-    { key: "circle-pad", label: "Circle Pad", values: ["Calibrate"] },
-    { key: "outer-camera", label: "Outer Cameras", values: ["Calibrate"] },
-    {
-      key: "transfer",
-      label: "System Transfer",
-      values: ["Transfer from a 3DS System", "Transfer from a DSi System"],
-    },
     { key: "update", label: "System Update", values: ["Check for Update"] },
     { key: "erase", label: "Format System Memory", values: ["Format"] },
-    { key: "systeminfo", label: "System Version", values: ["Ver. 3.0.0-6E"] },
+  ],
+  Profile: [
+    { key: "nickname", label: "User Name", values: ["Player"] },
+    { key: "birthday", label: "Birthday", values: ["2000-01-01"] },
+    {
+      key: "region",
+      label: "Region Settings",
+      values: ["Region settings are not implemented in this browser."],
+    },
+    {
+      key: "ds-profile",
+      label: "DS Profile",
+      values: ["The original DS profile page has not yet been reconstructed."],
+    },
   ],
 };
 export interface NativeState {
@@ -620,6 +644,11 @@ export function settingGroups(s: NativeState) {
 export function activeSettings(s: NativeState) {
   return settingGroups(s)[s.section] || [];
 }
+export function settingGroupNames(s: NativeState) {
+  return Object.keys(settingGroups(s)).filter(
+    (name) => s.device !== "3ds" || name !== "Profile",
+  );
+}
 export function settingValue(s: NativeState, item: Setting) {
   return s.prefs[item.key] ?? item.values[0];
 }
@@ -634,7 +663,13 @@ export function systemBack(s: NativeState): NativeState {
       section: "",
       selection: Math.max(0, XMB[s.category].items.indexOf(s.section || s.app)),
     };
-  if (s.section) return { ...s, section: "", selection: 0 };
+  if (s.section)
+    return {
+      ...s,
+      section:
+        s.device === "3ds" && s.section === "Profile" ? "Other Settings" : "",
+      selection: 0,
+    };
   if (s.device === "vita" && s.phase === "app") return { ...s, phase: "live" };
   if (s.device === "vita" && s.phase === "live")
     return { ...s, phase: "home", selection: 0 };
@@ -679,6 +714,42 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
     case "edit": {
       const item = activeSettings(s).find((e) => e.key === a.key);
       if (!item) return s;
+      if (s.device === "3ds" && item.key === "profile")
+        return { ...s, section: "Profile", selection: 0 };
+      if (item.key === "calibrate")
+        return { ...s, section: "Touch Screen", editor: "" };
+      if (item.key === "language")
+        return {
+          ...s,
+          dialog:
+            "This recreation currently displays English. Other system languages are not implemented.",
+        };
+      if (
+        [
+          "language",
+          "wifi-settings",
+          "bluetooth",
+          "keyboard",
+          "connections",
+          "dsconnections",
+          "outer-camera",
+          "3d",
+          "circle-pad",
+          "transfer",
+          "update",
+          "update-pc",
+          "psn",
+          "wma",
+          "flash",
+          "network",
+          "adhoc",
+        ].includes(item.key)
+      )
+        return {
+          ...s,
+          dialog:
+            "This hardware or service feature is not available in this browser. No connection or system change was made.",
+        };
       if (
         [
           "systeminfo",
@@ -688,6 +759,10 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
           "software",
           "extra",
           "dsiware",
+          "streetpass-manage",
+          "blocked-users",
+          "region",
+          "ds-profile",
           "legal",
         ].includes(item.key)
       )
@@ -721,6 +796,13 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
     case "ready":
       return {
         ...s,
+        selection:
+          s.device === "3ds"
+            ? Math.max(
+                0,
+                orderedApps(s).findIndex((a) => a.id === "card"),
+              )
+            : s.selection,
         phase: ["gb", "gba", "sp"].includes(s.device)
           ? "boot"
           : s.device === "ds"
@@ -1014,7 +1096,7 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
               key: entries[s.selection].key,
             });
         } else if (s.app === "settings") {
-          const groups = Object.keys(settingGroups(s));
+          const groups = settingGroupNames(s);
           if (b === "Down" || b === "Up")
             return {
               ...s,

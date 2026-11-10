@@ -1,19 +1,19 @@
 # 实机系统界面研究与实现范围
 
-更新：2026-11-10。目标是逐台对齐实机，目前是可操作的第一轮系统界面，**还没有完成所有机器从外壳到内置应用的 1:1 复刻**。没有捆绑官方 BIOS、系统固件、字体或原版应用。系统界面由 React/CSS/SVG 实现；GBA / GBA SP 插卡游戏由真实 mGBA 执行。
+更新：2026-11-10。目标是逐台对齐实机，目前是可操作的第一轮系统界面，**还没有完成所有机器从外壳到内置应用的 1:1 复刻**。没有捆绑官方 BIOS、系统固件、字体或原版应用。系统界面由 React/CSS/SVG 实现；GB / GBC / GBA 插卡游戏由真实 mGBA 执行，NDS 由单实例 DeSmuME 执行；PSP 可选连接用户本地 PPSSPP。
 
 ## 固定参照
 
 | 机器 | 系统参照 | 已实现的流程 | 尚未对齐 |
 | --- | --- | --- | --- |
-| Game Boy DMG-01 | DMG 无卡启动 | 绿色 LCD、无卡标志块下落；按钮不会进入虚构菜单 | BIOS 原始像素、时序、音效、卡带接入 |
+| Game Boy DMG-01 | DMG 无卡启动 | 绿色 LCD、无卡标志块下落；按钮不会进入虚构菜单 | BIOS 原始像素、时序、音效；GB Snake 已通过真实核心输入/状态回退，GBC 彩色卡带仍待独立验收 |
 | GBA AGB-001 / SP AGS-001 | GBA BIOS 无卡开机 | GAME BOY 启动标识，无卡留在启动页；AGB/AGS 插入卡带后运行真实 mGBA | 原版 Logo 像素/色彩/声效与 Multiboot 行为 |
 | DS Lite USG-001 | 英文 DS Lite 固件说明书 | 健康提示、双屏主页、时钟日历、无卡状态、PictoChat 房间与本地文字/绘图输入、Download Play 搜索页、Options/Clock/User/Touch Screen 设置入口、退出设置关机 | 原版位图字体、完整屏幕键盘、无线联机、发送绘图消息、所有设置的硬件效果、完整健康信息 |
 | 原版 3DS CTR-001 | 英文欧洲版 3.0.0-6E HOME Menu；2012 年原版 3DS 手册 | 无卡主页、图标选择和 1–3 行布局、亮度、HOME 暂停/Resume/关闭（System Settings 使用自己的 Close）、设置分类与选项、部分内置应用空库页 | 完整系统应用（Mii Maker/Plaza/AR/Face Raiders/eShop 等）、原版图标/字体/动画、完整系统设置与多语言、图标重排 |
-| PSP-1000 | 英文 XMB 6.61 视觉目标；Sony current guide 的对应型号条目 | 横向分类/纵向条目导航、设置列表与编辑/确认/取消、主题颜色、空 UMD/Memory Stick、HOME 返回 | 原版 XMB 字体/图标/波纹/过渡、全部设置条目、媒体与网络、USB/UMD 硬件行为 |
+| PSP-1000 | 英文 XMB 6.61 视觉目标；Sony current guide 的对应型号条目 | 横向分类/纵向条目导航、设置列表与编辑/确认/取消、主题颜色、空 UMD/Memory Stick、HOME 返回；可选外接 PPSSPP 真实控制及窗口共享 | 原版 XMB 字体/图标/波纹/过渡、全部设置条目、媒体与网络、USB/UMD 硬件行为 |
 | PS Vita PCH-1000 | 3.74 目标；Sony 3.73+ 用户指南 | 锁屏滑动/揭角、气泡分页、LiveArea 的 Start、应用/PS/索引导航、最多六个 LiveArea、第七个淘汰最早项、关闭、设置与选项保存 | 原版气泡图标/LiveArea 素材/字体、全部内置应用及系统设置、多语言、动态页编辑、网络/奖杯/相机服务 |
 
-设置目前保存用户选择；亮度、PSP 主题颜色、DS 用户名等已有对应可见反馈。语言选项没有全系统翻译，日期/时区尚未驱动时钟，安全/格式化/网络选项未模拟硬件副作用。只显示设置值不能视作该功能已经完整实现。内置应用未实现的页面明确显示未实现状态，不伪装成已成功联网或运行原版应用。
+设置目前保存用户选择；亮度、PSP 主题颜色、DS 用户名等已有对应可见反馈。语言选项没有全系统翻译，日期/时区已驱动时钟，安全/格式化/网络选项未模拟硬件副作用。只显示设置值不能视作该功能已经完整实现。内置应用未实现的页面明确显示未实现状态，不伪装成已成功联网或运行原版应用。
 
 ## 官方资料与技术依据
 
@@ -52,7 +52,7 @@
 | 新增 | 当前可执行行为 | 与原机仍有差异 |
 | --- | --- | --- |
 | 三种翻盖姿态 | 半展开/完全展开/合盖；点击/拖动；底座与盖板逐机标定；保留运行实例 | 图片与 SVG 混合外壳，非实机 CAD；见 [翻盖记录](CLAMSHELL.md) |
-| GBA 游戏 | GBA 与 SP 共用本地 mGBA、卡带导入与原生/即时存档；切换外壳先保存关机 | 其他五台真实游戏核心尚未接入 |
+| GBA 游戏 | GBA 与 SP 共用本地 mGBA、卡带导入与原生/即时存档；切换外壳先保存关机 | GB、DS 已接入并分别用 GB Snake / JamClown 验证；3DS/Vita 网页核心未接入；PSP 提供可选原生连接 |
 | Mii Maker | 从零创建，肤色、发型/颜色、眼睛、嘴、眼镜、身高/体型、昵称/衣服颜色；保存与重开 | 自绘矢量人物与有限特征集；尚无完整原版脸型/部件/QR 格式、照片自动生成 |
 | StreetPass Mii Plaza | 当前人物展示、人口、入口与设置页 | 无真正 StreetPass 无线协议和原版广场游戏 |
 | Game Notes | 16 页文字与手写笔记、翻页、清空、持久化 | 非原版笔迹引擎，尚未复刻全部工具 |
@@ -72,3 +72,9 @@
 数据库从 v1 升级到 v2，保留旧卡带、存档、配置，新增 `media` 对象仓库。网页仍不上传本地游戏、照片或录音；Browser 只有在用户输入网址后访问该站点。
 
 追加官方依据：[Mii 创建步骤](https://en-americas-support.nintendo.com/app/answers/detail/a_id/1952/p/172/c/950)、[Mii Maker 功能](https://www.nintendo.com/en-gb/Hardware/Nintendo-3DS-Family/Instant-Software/Mii-Maker/Mii-Maker-115540.html)、[Vita 设置目录](https://manuals.playstation.net/document/en/psvita/settings/index.html)、[PSP 系统设置目录](https://manuals.playstation.net/document/en/psp/current/settings/index_system.html)、[Sony 对 near/地图功能移除的说明](https://blog.ja.playstation.com/2015/01/28/20150128-psvita/)。Welcome Park 玩法属于本地重建，尚无足够官方逐帧对照资料，不标记为 1:1。
+
+## 2026-11-10 原机画面校正与外接入口
+
+最新逐像素坐标证据与当前差异分别在 [3DS](THREEDS_VISUAL_SPEC.md)、[PSP](PSP_VISUAL_SPEC.md)、[Vita](VITA_VISUAL_SPEC.md)。已校正 3DS 原生 HOME 工具栏/图标行数/亮度浮层/2×2 根设置/数据管理入口，PSP 类别与纵向条目的非均匀间距，Vita 3-4-3 布局和 LiveArea 门板位置。当前仍有重绘图标、替代字体、简化 banner/应用页面，未标为完整 1:1。
+
+[本地资源包](../SYSTEM_RESOURCES.md) 可替换用户自己有权使用的图标、背景、上屏 banner 与字体；[连接 PPSSPP](../EXTERNAL_EMULATORS.md) 保留网页默认体验。已实际验证官方 macOS SDL 1.20.4 的按钮/模拟轴/暂停恢复，原生图形后端截图失败明确记录，原生窗口共享选择待手动验收。

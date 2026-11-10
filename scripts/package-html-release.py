@@ -6,14 +6,16 @@ from zipfile import ZipFile, ZIP_DEFLATED
 root = Path(__file__).resolve().parent.parent
 out = root / 'releases' / 'pocket-museum-html.zip'
 out.parent.mkdir(parents=True, exist_ok=True)
-readme = '''Pocket Museum 离线 HTML 交付\n\n双击 pocket-museum-all.html 可在七台掌机之间切换；每个其他 HTML 对应一台掌机。\n文件内嵌机身图片、JS、CSS、交互控件、三种翻盖姿态与当前系统 UI，可断网运行。\n开机显示对应的无卡启动页或系统界面，实体方向/面键和触屏可以操作。\n\n这些文件不包含游戏模拟器核心。真实 GBA 游戏请用完整项目主页面的 GBA / GBA SP：选择卡带，再开启电源。\n完整 1:1 外壳和全部原版系统应用尚未完成。逐机覆盖、未完成项与官方资料见 docs/research/NATIVE_SYSTEMS.md。\n按用户要求排除 Nintendo 厂商 Logo。\n\n系统设置仅保存在本机浏览器。直接 file:// 打开时部分浏览器可能限制存储，但不影响基本界面操作。\n'''
+readme = '''Pocket Museum 离线 HTML 交付\n\n双击 pocket-museum-all.html 可在七台掌机之间切换；每个其他 HTML 对应一台掌机。\n文件内嵌机身图片、JS、CSS、交互控件、三种翻盖姿态与当前系统 UI，可断网运行。\n开机显示对应的无卡启动页或系统界面，实体方向/面键和触屏可以操作。\n\n这些文件不包含游戏模拟器核心。真实 GB/GBA/NDS 游戏请用完整项目主页面的 GB / GBA / GBA SP / DS：选择卡带，再开启电源。\n完整 1:1 外壳和全部原版系统应用尚未完成。逐机覆盖、未完成项与官方资料见 docs/research/NATIVE_SYSTEMS.md。\n按用户要求排除 Nintendo 厂商 Logo。\n\n系统设置仅保存在本机浏览器。直接 file:// 打开时部分浏览器可能限制存储，但不影响基本界面操作。\n'''
 with ZipFile(out, 'w', ZIP_DEFLATED, compresslevel=9) as archive:
     for file in sorted((root / 'public' / 'standalone').glob('*.html')):
         archive.write(file, file.name)
     archive.write(root / 'LICENSE', 'LICENSE.txt')
-    for name in ['ACCEPTANCE.md', 'CONTROL_AUDIT.md', 'design/ASSETS.md', 'design/FLAT_PROMPTS.md', 'research/NATIVE_SYSTEMS.md', 'research/CLAMSHELL.md']:
+    for file in sorted((root / 'public' / 'licenses').glob('*')):
+        if file.is_file(): archive.write(file, 'licenses/' + file.name)
+    for name in ['DEVELOPMENT_STAGES.md', 'EXTERNAL_EMULATORS.md', 'SYSTEM_RESOURCES.md', 'research/THREEDS_VISUAL_SPEC.md', 'research/PSP_VISUAL_SPEC.md', 'research/VITA_VISUAL_SPEC.md', 'research/EXTERNAL_EMULATOR_PROTOCOL.md', 'research/THIRD_PARTY_UI.md', 'research/EMULATOR_FEASIBILITY.md', 'research/EXISTING_SYSTEMS_AUDIT.md', 'ACCEPTANCE.md', 'CONTROL_AUDIT.md', 'design/ASSETS.md', 'design/THEMES.md', 'design/FLAT_PROMPTS.md', 'research/NATIVE_SYSTEMS.md', 'research/CLAMSHELL.md']:
         archive.write(root / 'docs' / name, 'docs/' + name)
-    for folder in ['controls', 'systems', 'fold']:
+    for folder in ['current']:
         for file in sorted((root / 'docs' / 'screenshots' / folder).glob('*.png')):
             archive.write(file, 'docs/screenshots/' + folder + '/' + file.name)
     for file in sorted((root / 'docs' / 'screenshots').glob('flat-*.png')):
@@ -23,7 +25,7 @@ source_out=root/'releases'/'pocket-museum-source.zip'
 source_files=['.gitignore','LICENSE','README.md','index.html','emulator.html','package.json','package-lock.json','tsconfig.json','vite.config.ts','vitest.config.ts','playwright.config.ts']
 with ZipFile(source_out,'w',ZIP_DEFLATED,compresslevel=9) as archive:
     for name in source_files: archive.write(root/name,'PocketMuseum/'+name)
-    for folder in ['src','scripts','tests','public','docs']:
+    for folder in ['src','scripts','tests','public','docs','.github']:
         for file in sorted((root/folder).rglob('*')):
             if file.is_file() and file.name!='.DS_Store' and '__pycache__' not in file.parts:
                 archive.write(file,'PocketMuseum/'+str(file.relative_to(root)))

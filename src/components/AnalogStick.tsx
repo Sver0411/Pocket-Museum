@@ -24,6 +24,7 @@ export function AnalogStick({ device, stick, input }: Props) {
       y /= length;
     }
     setPoint({ x, y });
+    if (input.analog(`stick:${stick.id}`, x, y)) return;
     for (const [button, pressed] of [
       ["Left", x < -0.3],
       ["Right", x > 0.3],
@@ -57,12 +58,14 @@ export function AnalogStick({ device, stick, input }: Props) {
     keys.current.clear();
     setActive(false);
     setPoint({ x: 0, y: 0 });
+    input.analog(`stick:${stick.id}`, 0, 0);
     input.releasePrefix(`stick:${stick.id}:`);
   };
   useEffect(() => {
     window.addEventListener("blur", cancel);
     return () => {
       window.removeEventListener("blur", cancel);
+      input.analog(`stick:${stick.id}`, 0, 0);
       input.releasePrefix(`stick:${stick.id}:`);
     };
   }, [input, stick.id]);

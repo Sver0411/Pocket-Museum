@@ -1,3 +1,4 @@
+import type { GameSystem } from "./systems";
 import { CHANNEL } from "./protocol";
 import type { Button, Command, Response } from "./protocol";
 export class EmulatorBridge {
@@ -51,12 +52,23 @@ export class EmulatorBridge {
       );
     });
   }
-  async start(rom: Uint8Array, gameId: string, nativeSave?: Uint8Array) {
+  async start(
+    rom: Uint8Array,
+    gameId: string,
+    nativeSave?: Uint8Array,
+    system: GameSystem = "gba",
+  ) {
     await this.request({ type: "hello" });
-    await this.request({ type: "start", rom, gameId, nativeSave }, 60000);
+    await this.request(
+      { type: "start", rom, gameId, nativeSave, system },
+      60000,
+    );
   }
   input(button: Button, pressed: boolean) {
     return this.request({ type: "input", button, pressed });
+  }
+  touch(x: number, y: number, down: boolean) {
+    return this.request({ type: "touch", x, y, down });
   }
   pause(paused: boolean) {
     return this.request({ type: "pause", paused });

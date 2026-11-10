@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 const result = await build({
   entryPoints: ["src/main.tsx"],
   bundle: true,
+  external: ["/fonts/*"],
   write: false,
   outfile: "pocket-museum.js",
   format: "iife",
@@ -16,8 +17,34 @@ const result = await build({
   },
   legalComments: "inline",
 });
-const javascript = result.outputFiles.find((f) => f.path.endsWith(".js")).text;
-const css = result.outputFiles.find((f) => f.path.endsWith(".css")).text;
+let javascript = result.outputFiles.find((f) => f.path.endsWith(".js")).text;
+for (const file of [
+  "switch6",
+  "switch7",
+  "rollover1",
+  "switch1",
+  "mouseclick1",
+  "mouserelease1",
+  "switch10",
+]) {
+  const path = `/audio/kenney-ui/${file}.wav`;
+  const data = await readFile("public" + path);
+  javascript = javascript.replaceAll(
+    JSON.stringify(path),
+    JSON.stringify("data:audio/wav;base64," + data.toString("base64")),
+  );
+}
+const menuMusic = await readFile("public/audio/menu-loop.wav");
+javascript = javascript.replaceAll(
+  JSON.stringify("/audio/menu-loop.wav"),
+  JSON.stringify("data:audio/wav;base64," + menuMusic.toString("base64")),
+);
+let css = result.outputFiles.find((f) => f.path.endsWith(".css")).text;
+const font = await readFile("public/fonts/fs-doublescreen-eno-c.ttf");
+css = css.replaceAll(
+  "/fonts/fs-doublescreen-eno-c.ttf",
+  "data:font/ttf;base64," + font.toString("base64"),
+);
 // Read the same typed device definitions with esbuild, without maintaining another UI.
 const configBuild = await build({
   entryPoints: ["src/devices.ts"],

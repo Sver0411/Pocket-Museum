@@ -1,3 +1,4 @@
+import { selectDevice } from "./helpers";
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
@@ -10,11 +11,7 @@ test.use({
   },
 });
 
-const select = async (p: Page, name: string) =>
-  p
-    .getByRole("navigation", { name: "切换掌机" })
-    .getByRole("button", { name, exact: true })
-    .click();
+const select = async (p: Page, name: string) => selectDevice(p, name);
 async function boot(p: Page, name: string) {
   await select(p, name);
   await p.locator(".power-button").click();
@@ -44,7 +41,7 @@ test("clamshells close to the calibrated plane, open by dragging, retain manual 
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   for (const [id, name] of [
     ["sp", "GBA SP"],
     ["ds", "DS"],
@@ -170,7 +167,7 @@ test("3DS Mii editor saves real features and notes survive HOME and a power cycl
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await boot(page, "3DS");
   await page.getByRole("button", { name: "完全展开", exact: true }).click();
   await page.waitForTimeout(800);
@@ -216,7 +213,7 @@ test("3DS Mii editor saves real features and notes survive HOME and a power cycl
 test("local photo import is persistent and deleted only after confirmation", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await boot(page, "PS Vita");
   await page.getByLabel("导入本地媒体").setInputFiles({
     name: "local-picture.png",
@@ -257,8 +254,8 @@ test("DS PictoChat exchanges text and actual drawings between two same-origin pa
   context,
 }) => {
   const second = await context.newPage();
-  await page.goto("/");
-  await second.goto("/");
+  await page.goto("/#/play/sp");
+  await second.goto("/#/play/sp");
   for (const p of [page, second]) {
     await boot(p, "DS");
     await p.getByRole("button", { name: "PICTOCHAT", exact: false }).click();
@@ -283,7 +280,7 @@ test("DS PictoChat exchanges text and actual drawings between two same-origin pa
 test("GBA cartridge uses the real mGBA core and remains playable after changing shell", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await select(page, "GBA");
   await page.getByRole("button", { name: "选择卡带", exact: true }).click();
   await page.getByRole("button", { name: /2048 Advance/ }).click();
@@ -338,7 +335,7 @@ test("GBA cartridge uses the real mGBA core and remains playable after changing 
 test("Vita Welcome Park runs Digit Chase and stores completion", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   await boot(page, "PS Vita");
   await app(page, "Welcome Park", true);
   await page.getByRole("button", { name: "Digit Chase", exact: true }).click();
@@ -359,7 +356,7 @@ test.describe("browser camera and microphone integration", () => {
     context,
   }) => {
     await context.grantPermissions(["camera", "microphone"]);
-    await page.goto("/");
+    await page.goto("/#/play/sp");
     await boot(page, "3DS");
     await app(page, "3DS Camera");
     await page
@@ -419,7 +416,7 @@ test.describe("browser camera and microphone integration", () => {
     context,
   }) => {
     await context.grantPermissions(["microphone"]);
-    await page.goto("/");
+    await page.goto("/#/play/sp");
     await boot(page, "3DS");
     await app(page, "3DS Sound");
     await page
@@ -450,7 +447,7 @@ test.describe("browser camera and microphone integration", () => {
 test("3DS and Vita icons can be held, swapped and restored after reload", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/play/sp");
   for (const name of ["3DS", "PS Vita"]) {
     await boot(page, name);
     if (name === "3DS") {

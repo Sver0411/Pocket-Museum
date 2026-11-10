@@ -1,9 +1,12 @@
+import type { Core, GameSystem } from "../emulator/systems";
 export interface Game {
   id: string;
   name: string;
   bytes: Uint8Array;
   importedAt: number;
   demo?: boolean;
+  system?: GameSystem;
+  license?: string;
 }
 export interface MediaItem {
   id: string;
@@ -18,7 +21,7 @@ export interface Save {
   kind: "native" | "state";
   data: Uint8Array;
   updatedAt: number;
-  core: "mgba";
+  core: Core;
   version: "4.2.3";
 }
 let connection: Promise<IDBDatabase> | undefined;
@@ -80,14 +83,19 @@ export const storage = {
   putGame: (game: Game) => transact("games", "readwrite", (s) => s.put(game)),
   getSave: (id: string, kind: Save["kind"]) =>
     transact<Save | undefined>("saves", "readonly", (s) => s.get([id, kind])),
-  putSave: (gameId: string, kind: Save["kind"], data: Uint8Array) =>
+  putSave: (
+    gameId: string,
+    kind: Save["kind"],
+    data: Uint8Array,
+    core: Core = "mgba",
+  ) =>
     transact("saves", "readwrite", (s) =>
       s.put({
         gameId,
         kind,
         data: new Uint8Array(data),
         updatedAt: Date.now(),
-        core: "mgba",
+        core,
         version: "4.2.3",
       } satisfies Save),
     ),
@@ -102,17 +110,46 @@ export async function identify(bytes: Uint8Array) {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
-export async function importRom(file: File): Promise<Game> {
-  if (!/\.gba$/i.test(file.name)) throw new Error("请选择 .gba 格式的游戏文件");
-  if (file.size < 192 || file.size > 32 * 1024 * 1024)
-    throw new Error("ROM 大小应在 192 B 至 32 MB 之间");
+export async function importRom(
+  file: File,
+  allowed: readonly GameSystem[] = ["gba"],
+): Promise<Game> {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  const system = ({ gb: "gb", gbc: "gbc", gba: "gba", nds: "nds" } as const)[
+    extension as "gb" | "gbc" | "gba" | "nds"
+  ];
+  if (!system || !allowed.includes(system))
+    throw new Error(
+      `请选择 ${allowed.map((s) => "." + (s === "nds" ? "nds" : s)).join(" / ")} 格式的游戏文件`,
+    );
+  const max = system === "nds" ? 256 : system === "gba" ? 32 : 8;
+  const min = system === "nds" ? 512 : system === "gba" ? 192 : 0x150;
+  if (file.size < min || file.size > max * 1024 * 1024)
+    throw new Error(`ROM 大小应在 ${min} B 至 ${max} MB 之间`);
   const bytes = new Uint8Array(await file.arrayBuffer());
-  if (bytes[0xb2] !== 0x96)
+  if (system === "gba" && bytes[0xb2] !== 0x96)
     throw new Error("无效的 GBA 文件头，请选择完整的 .gba ROM");
+  if (system === "gb" || system === "gbc") {
+    let checksum = 0;
+    for (let i = 0x134; i <= 0x14c; i++)
+      checksum = (checksum - bytes[i] - 1) & 255;
+    if (checksum !== bytes[0x14d] || bytes.length < 16384 || bytes[0x148] > 8)
+      throw new Error("无效的 GB / GBC 文件头或校验和");
+  }
+  if (system === "nds") {
+    const view = new DataView(bytes.buffer);
+    for (const offset of [0x20, 0x30]) {
+      const start = view.getUint32(offset, true),
+        size = view.getUint32(offset + 12, true);
+      if (start < 0x200 || !size || start + size > bytes.length)
+        throw new Error("无效的 NDS 文件头：ARM 程序超出 ROM 范围");
+    }
+  }
   return {
     id: await identify(bytes),
-    name: file.name.replace(/\.gba$/i, ""),
+    name: file.name.replace(/\.(gb|gbc|gba|nds)$/i, ""),
     bytes,
+    system,
     importedAt: Date.now(),
   };
 }

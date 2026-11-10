@@ -1,3 +1,4 @@
+import type { GameSystem } from "./systems";
 export const CHANNEL = "pocketsp:v1";
 export const BUTTONS = [
   "Up",
@@ -31,8 +32,15 @@ export const RETROPAD: Record<Button, number> = {
 };
 export type Command =
   | { type: "hello" }
-  | { type: "start"; rom: Uint8Array; gameId: string; nativeSave?: Uint8Array }
+  | {
+      type: "start";
+      rom: Uint8Array;
+      gameId: string;
+      nativeSave?: Uint8Array;
+      system?: GameSystem;
+    }
   | { type: "input"; button: Button; pressed: boolean }
+  | { type: "touch"; x: number; y: number; down: boolean }
   | { type: "pause"; paused: boolean }
   | { type: "volume"; volume: number }
   | { type: "save-state" }
@@ -65,7 +73,16 @@ export function isCommand(c: unknown): c is Command {
       return (
         v.rom instanceof Uint8Array &&
         v.rom.length >= 192 &&
-        v.rom.length <= 32 * 1024 * 1024 &&
+        v.rom.length <=
+          (v.system === "nds"
+            ? 256
+            : v.system === "gb" || v.system === "gbc"
+              ? 8
+              : 32) *
+            1024 *
+            1024 &&
+        (v.system === undefined ||
+          ["gb", "gbc", "gba", "nds"].includes(v.system as string)) &&
         typeof v.gameId === "string" &&
         /^[a-f0-9]{64}$/.test(v.gameId) &&
         (v.nativeSave === undefined || v.nativeSave instanceof Uint8Array)
@@ -73,6 +90,18 @@ export function isCommand(c: unknown): c is Command {
     case "input":
       return (
         BUTTONS.includes(v.button as Button) && typeof v.pressed === "boolean"
+      );
+    case "touch":
+      return (
+        typeof v.down === "boolean" &&
+        typeof v.x === "number" &&
+        typeof v.y === "number" &&
+        Number.isFinite(v.x) &&
+        Number.isFinite(v.y) &&
+        v.x >= 0 &&
+        v.x <= 1 &&
+        v.y >= 0 &&
+        v.y <= 1
       );
     case "pause":
       return typeof v.paused === "boolean";
