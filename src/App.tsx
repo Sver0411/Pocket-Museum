@@ -1,4 +1,8 @@
 import { PpssppClient } from "./emulator/PpssppClient";
+import {
+  DevicePresentation,
+  KeyboardLegend,
+} from "./presentations/DevicePresentation";
 import { ThemeBackdrop } from "./components/ThemeBackdrop";
 import { ExternalScreen } from "./components/ExternalScreen";
 import type { CaptureCrop } from "./components/ExternalScreen";
@@ -31,7 +35,6 @@ import {
   Pause,
   Play,
   Plus,
-  Power,
   RotateCcw,
   Save,
   ShieldCheck,
@@ -860,7 +863,7 @@ export default function App() {
     powered = status !== "off" && status !== "error";
   return (
     <div
-      className={`app studio-app play-view ${toolsOpen ? "tools-open" : ""}`}
+      className={`app studio-app play-view ${toolsOpen ? "tools-open" : ""} ${ready && !!bridge.current ? "game-active" : ""}`}
       data-theme={deviceId}
     >
       <ThemeBackdrop device={deviceId} />
@@ -968,70 +971,10 @@ export default function App() {
           <CircleHelp size={19} />
         </button>
       </header>
-      <main className="studio-main">
-        <aside className="control-rail">
-          <div className="rail-heading">
-            <Gamepad2 size={22} />
-            <h1>操作方法</h1>
-          </div>
-          <div className="control-legend">
-            <div className="direction-legend">
-              <span className="arrow-keys">
-                <kbd>↑</kbd>
-                <kbd>↓</kbd>
-                <kbd>←</kbd>
-                <kbd>→</kbd>
-              </span>
-              <span>移动</span>
-            </div>
-            <div>
-              <span>
-                <kbd>X</kbd>
-              </span>
-              <span>{device.faceLabels?.A || "A"} 键</span>
-            </div>
-            <div>
-              <span>
-                <kbd>Z</kbd>
-              </span>
-              <span>{device.faceLabels?.B || "B"} 键</span>
-            </div>
-            {device.keys.some((k) => k.button === "L") && (
-              <div>
-                <span>
-                  <kbd>Q</kbd>
-                  <kbd>E</kbd>
-                </span>
-                <span>L / R 肩键</span>
-              </div>
-            )}
-            <div>
-              <kbd className="wide">Enter</kbd>
-              <span>START</span>
-            </div>
-            <div>
-              <kbd className="wide">Shift</kbd>
-              <span>SELECT</span>
-            </div>
-          </div>
-          {device.keys.some((k) => k.button === "X") && (
-            <div className="extra-key-legend">
-              <span>
-                <kbd>C</kbd> / <kbd>V</kbd>
-              </span>
-              <span>
-                {device.faceLabels?.X || "X"} / {device.faceLabels?.Y || "Y"}
-              </span>
-            </div>
-          )}
-          {pads > 0 && (
-            <div className="gamepad-status connected">
-              <i />
-              <span>已连接 {pads} 个手柄</span>
-            </div>
-          )}
-        </aside>
-        <section className="play-space" aria-label="掌机游玩区">
+      <DevicePresentation
+        device={deviceId}
+        keyboard={<KeyboardLegend device={device} pads={pads} />}
+        handheld={
           <Console
             key={deviceId}
             cancelToken={`${help}:${libraryOpen}:${flat}`}
@@ -1066,6 +1009,13 @@ export default function App() {
             light={light}
             onLight={() => setLight(!light)}
             onPower={power}
+            powerDisabled={busy || !hydrated || status === "loading"}
+            onCartridge={
+              !STANDALONE && !!DEVICE_ADAPTERS[deviceId]
+                ? () => setLibraryOpen(true)
+                : undefined
+            }
+            cartridgeName={game?.name}
             onFold={fold}
             foldDisabled={busy}
             onLidMotion={() => input.releaseAll()}
@@ -1132,292 +1082,281 @@ export default function App() {
             session={session}
             onFrame={(frame) => void onFrame(frame)}
           />
-        </section>
-        <aside className="settings-rail">
-          <div className="rail-heading">
-            <Sun size={21} />
-            <h2>控制</h2>
-            <button
-              className="close-tools"
-              aria-label="关闭操作菜单"
-              onClick={() => setToolsOpen(false)}
-            >
-              <X size={19} />
-            </button>
-          </div>
-          {externalVersion ? (
-            <p className="external-audio-note">音量在 PPSSPP 中调整</p>
-          ) : (
-            <div className="sound-control">
+        }
+        controls={
+          <>
+            <div className="rail-heading">
+              <Sun size={21} />
+              <h2>控制</h2>
               <button
-                className="sound-toggle"
-                onClick={() => setMuted(!muted)}
-                aria-label={muted ? "开启声音" : "静音"}
+                className="close-tools"
+                aria-label="关闭操作菜单"
+                onClick={() => setToolsOpen(false)}
               >
-                {muted ? <VolumeX size={22} /> : <Volume2 size={22} />}
+                <X size={19} />
               </button>
-              <div>
-                <span>音量</span>
-                <input
-                  className="volume-slider"
-                  type="range"
-                  aria-label="游戏音量"
-                  min="0"
-                  max="100"
-                  value={muted ? 0 : volume}
-                  style={{
-                    background: `linear-gradient(to right, var(--accent) ${muted ? 0 : volume}%, #e8e1d7 ${muted ? 0 : volume}%)`,
-                  }}
-                  onChange={(e) => {
-                    setVolume(+e.target.value);
-                    setMuted(+e.target.value === 0);
-                  }}
-                />
-              </div>
-              <small>{muted ? "0" : volume}</small>
             </div>
-          )}
-          <button
-            className="setting-row"
-            onClick={() => setLight(!light)}
-            aria-pressed={light}
-          >
-            <span>
-              <Sun size={20} />
-              {deviceId === "sp" ? "屏幕前光" : "屏幕亮度"}
-            </span>
-            <span className={`toggle ${light ? "active" : ""}`}>
-              <i />
-            </span>
-          </button>
-          {device.lid && (
-            <button
-              className="setting-row"
-              onClick={fold}
-              disabled={busy}
-              aria-label={closed ? "打开上盖" : "合上上盖"}
-            >
-              <span>
-                <Layers size={20} />
-                {closed ? "打开上盖" : "合上上盖"}
-              </span>
-              <ChevronRight
-                className={closed ? "rotate-arrow" : ""}
-                size={15}
-              />
-            </button>
-          )}
-          {device.lid && (
-            <button
-              className="setting-row"
-              aria-label={flat ? "恢复半展开" : "完全展开"}
-              aria-pressed={flat}
-              disabled={busy || closed}
-              onClick={() => {
-                input.releaseAll();
-                setFlat((v) => !v);
-              }}
-            >
-              <span>
-                <Maximize2 size={20} />
-                {flat ? "恢复半展开" : "完全展开"}
-              </span>
-              <ChevronRight size={15} />
-            </button>
-          )}
-          <button
-            className="setting-row"
-            onClick={() => {
-              if (document.fullscreenElement) {
-                void document.exitFullscreen().catch(report);
-              } else
-                void document.documentElement.requestFullscreen().catch(report);
-            }}
-            aria-label="全屏"
-          >
-            <span>
-              <Maximize2 size={20} />
-              全屏
-            </span>
-            <ChevronRight size={15} />
-          </button>
+            {externalVersion ? (
+              <p className="external-audio-note">音量在 PPSSPP 中调整</p>
+            ) : (
+              <div className="sound-control">
+                <button
+                  className="sound-toggle"
+                  onClick={() => setMuted(!muted)}
+                  aria-label={muted ? "开启声音" : "静音"}
+                >
+                  {muted ? <VolumeX size={22} /> : <Volume2 size={22} />}
+                </button>
+                <div>
+                  <span>音量</span>
+                  <input
+                    className="volume-slider"
+                    type="range"
+                    aria-label="游戏音量"
+                    min="0"
+                    max="100"
+                    value={muted ? 0 : volume}
+                    style={{
+                      background: `linear-gradient(to right, var(--accent) ${muted ? 0 : volume}%, #e8e1d7 ${muted ? 0 : volume}%)`,
+                    }}
+                    onChange={(e) => {
+                      setVolume(+e.target.value);
+                      setMuted(+e.target.value === 0);
+                    }}
+                  />
+                </div>
+                <small>{muted ? "0" : volume}</small>
+              </div>
+            )}
 
-          <div className="rail-separator" />
-          <button
-            className="setting-row"
-            onClick={pause}
-            disabled={!ready || busy || closed}
-            aria-label={status === "paused" ? "继续游戏" : "暂停游戏"}
-          >
-            <span>
-              {status === "paused" ? <Play size={20} /> : <Pause size={20} />}
-              {status === "paused" ? "继续游戏" : "暂停游戏"}
-            </span>
-          </button>
-          {!STANDALONE && !!DEVICE_ADAPTERS[deviceId] && (
-            <>
+            <button
+              className="setting-row"
+              onClick={() => setLight(!light)}
+              aria-pressed={light}
+            >
+              <span>
+                <Sun size={20} />
+                {deviceId === "sp" ? "屏幕前光" : "屏幕亮度"}
+              </span>
+              <span className={`toggle ${light ? "active" : ""}`}>
+                <i />
+              </span>
+            </button>
+            {device.lid && (
               <button
                 className="setting-row"
-                onClick={quickSave}
-                disabled={
-                  !ready ||
-                  !bridge.current ||
-                  busy ||
-                  !DEVICE_ADAPTERS[deviceId] ||
-                  STANDALONE
-                }
+                onClick={fold}
+                disabled={busy}
+                aria-label={closed ? "打开上盖" : "合上上盖"}
               >
                 <span>
-                  <Save size={20} />
-                  即时存档
+                  <Layers size={20} />
+                  {closed ? "打开上盖" : "合上上盖"}
                 </span>
+                <ChevronRight
+                  className={closed ? "rotate-arrow" : ""}
+                  size={15}
+                />
               </button>
+            )}
+            {device.lid && (
               <button
                 className="setting-row"
-                onClick={quickLoad}
-                disabled={
-                  !ready ||
-                  !hasState ||
-                  !bridge.current ||
-                  busy ||
-                  !DEVICE_ADAPTERS[deviceId] ||
-                  STANDALONE
-                }
+                aria-label={flat ? "恢复半展开" : "完全展开"}
+                aria-pressed={flat}
+                disabled={busy || closed}
+                onClick={() => {
+                  input.releaseAll();
+                  setFlat((v) => !v);
+                }}
               >
                 <span>
-                  <RotateCcw size={19} />
-                  读取存档
+                  <Maximize2 size={20} />
+                  {flat ? "恢复半展开" : "完全展开"}
                 </span>
-                {hasState && <i className="state-dot" />}
+                <ChevronRight size={15} />
               </button>
-            </>
-          )}
-          <details className="more-controls">
-            <summary>更多</summary>
-            <div>
-              {!STANDALONE && deviceId === "psp" && (
+            )}
+            <div className="rail-separator" />
+            <button
+              className="setting-row"
+              onClick={pause}
+              disabled={!ready || busy || closed}
+              aria-label={status === "paused" ? "继续游戏" : "暂停游戏"}
+            >
+              <span>
+                {status === "paused" ? <Play size={20} /> : <Pause size={20} />}
+                {status === "paused" ? "继续游戏" : "暂停游戏"}
+              </span>
+            </button>
+            {!STANDALONE && !!DEVICE_ADAPTERS[deviceId] && !!game && (
+              <>
                 <button
                   className="setting-row"
-                  onClick={() => setConnectionOpen(true)}
+                  onClick={quickSave}
+                  disabled={
+                    !ready ||
+                    !bridge.current ||
+                    busy ||
+                    !DEVICE_ADAPTERS[deviceId] ||
+                    STANDALONE
+                  }
                 >
-                  {externalVersion ? "模拟器连接" : "连接模拟器"}
+                  <span>
+                    <Save size={20} />
+                    即时存档
+                  </span>
                 </button>
-              )}
-              {["3ds", "psp", "vita"].includes(deviceId) && (
-                <>
-                  <label className="setting-row system-resources-import">
-                    导入系统资源文件夹
-                    <input
-                      type="file"
-                      multiple
-                      {...{ webkitdirectory: "" }}
-                      aria-label="导入系统资源"
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files ?? []);
-                        e.target.value = "";
-                        if (files.length)
-                          void importSystemResources(files, deviceId)
-                            .then(() => notify("系统资源已加载，仅保存在本机"))
-                            .catch(report);
-                      }}
-                    />
-                  </label>
-                  {systemResources && (
-                    <button
-                      className="setting-row"
-                      onClick={() =>
-                        void clearSystemResources(deviceId)
-                          .then(() => notify("已恢复内置重建素材"))
-                          .catch(report)
-                      }
-                    >
-                      恢复内置素材
-                    </button>
-                  )}
-                </>
-              )}
-              {deviceId === "psp" && (
-                <label className="headphone-option">
-                  <input
-                    type="checkbox"
-                    checked={headphones}
-                    onChange={(e) => setHeadphones(e.target.checked)}
-                  />
-                  耳机模式（手动）
-                </label>
-              )}
-              {["3ds", "psp", "vita"].includes(deviceId) && (
-                <MediaImport
-                  device={deviceId}
-                  onDone={notify}
-                  onError={report}
-                />
-              )}
-              <button className="setting-row" onClick={() => setHelp(true)}>
-                键位与使用指南
-              </button>
-              {!STANDALONE && (
-                <a
+                <button
                   className="setting-row"
-                  href={`/standalone/${deviceId}.html`}
-                  download
+                  onClick={quickLoad}
+                  disabled={
+                    !ready ||
+                    !hasState ||
+                    !bridge.current ||
+                    busy ||
+                    !DEVICE_ADAPTERS[deviceId] ||
+                    STANDALONE
+                  }
                 >
-                  下载单文件版
-                </a>
-              )}
-              {(STANDALONE ||
-                (!DEVICE_ADAPTERS[deviceId] && !externalVersion)) && (
-                <p className="support-note">
-                  {STANDALONE
-                    ? "离线版包含机身与系统界面，不含游戏核心。"
-                    : "本机型目前提供系统界面，游戏核心尚未接入。"}
-                </p>
-              )}
-            </div>
-          </details>
-        </aside>
-      </main>
-      <div className="studio-dock">
-        <button
-          className={`power-button ${powered ? "powered" : ""}`}
-          onClick={power}
-          disabled={busy || !hydrated || status === "loading"}
-          aria-label={powered ? "关闭电源" : "开启电源"}
-        >
-          <Power size={17} />
-          <span>{powered ? "关闭电源" : "开启电源"}</span>
-        </button>
-        {!STANDALONE && !!DEVICE_ADAPTERS[deviceId] && (
-          <>
-            <span className="dock-divider" />
-            <button
-              className="cartridge-button"
-              aria-label="选择卡带"
-              disabled={!DEVICE_ADAPTERS[deviceId] || STANDALONE}
-              onClick={() => setLibraryOpen(true)}
+                  <span>
+                    <RotateCcw size={19} />
+                    读取存档
+                  </span>
+                  {hasState && <i className="state-dot" />}
+                </button>
+              </>
+            )}
+            <details
+              className="more-controls"
+              onClick={(e) => {
+                if (e.target instanceof Element && e.target.closest("button,a"))
+                  e.currentTarget.open = false;
+              }}
             >
-              <FolderOpen size={17} />
-              <span>{game ? "更换卡带" : "选择卡带"}</span>
-              <ChevronDown size={12} />
-            </button>
+              <summary>更多</summary>
+              <div>
+                <button
+                  className="setting-row"
+                  onClick={() => {
+                    if (document.fullscreenElement) {
+                      void document.exitFullscreen().catch(report);
+                    } else
+                      void document.documentElement
+                        .requestFullscreen()
+                        .catch(report);
+                  }}
+                  aria-label="全屏"
+                >
+                  <span>
+                    <Maximize2 size={20} />
+                    全屏
+                  </span>
+                  <ChevronRight size={15} />
+                </button>
+
+                {!!DEVICE_ADAPTERS[deviceId] && game && !STANDALONE && (
+                  <button
+                    className="setting-row eject-button"
+                    onClick={() =>
+                      void guarded(async () => {
+                        await stop();
+                        setGame(undefined);
+                        selectedGames.current[selectionKey(deviceId)] = "";
+                        await storage.putSetting(settingKey(deviceId), "");
+                      })
+                    }
+                  >
+                    拔出卡带
+                  </button>
+                )}
+
+                {!STANDALONE && deviceId === "psp" && (
+                  <button
+                    className="setting-row"
+                    onClick={() => setConnectionOpen(true)}
+                  >
+                    {externalVersion ? "模拟器连接" : "连接模拟器"}
+                  </button>
+                )}
+                {["3ds", "psp", "vita"].includes(deviceId) && (
+                  <>
+                    <label className="setting-row system-resources-import">
+                      导入系统资源文件夹
+                      <input
+                        type="file"
+                        multiple
+                        {...{ webkitdirectory: "" }}
+                        aria-label="导入系统资源"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files ?? []);
+                          e.target.value = "";
+                          if (files.length)
+                            void importSystemResources(files, deviceId)
+                              .then(() =>
+                                notify("系统资源已加载，仅保存在本机"),
+                              )
+                              .catch(report);
+                        }}
+                      />
+                    </label>
+                    {systemResources && (
+                      <button
+                        className="setting-row"
+                        onClick={() =>
+                          void clearSystemResources(deviceId)
+                            .then(() => notify("已恢复内置重建素材"))
+                            .catch(report)
+                        }
+                      >
+                        恢复内置素材
+                      </button>
+                    )}
+                  </>
+                )}
+                {deviceId === "psp" && (
+                  <label className="headphone-option">
+                    <input
+                      type="checkbox"
+                      checked={headphones}
+                      onChange={(e) => setHeadphones(e.target.checked)}
+                    />
+                    耳机模式（手动）
+                  </label>
+                )}
+                {["3ds", "psp", "vita"].includes(deviceId) && (
+                  <MediaImport
+                    device={deviceId}
+                    onDone={notify}
+                    onError={report}
+                  />
+                )}
+                <button className="setting-row" onClick={() => setHelp(true)}>
+                  键位与使用指南
+                </button>
+                {!STANDALONE && (
+                  <a
+                    className="setting-row"
+                    href={`/standalone/${deviceId}.html`}
+                    download
+                  >
+                    下载单文件版
+                  </a>
+                )}
+                {(STANDALONE ||
+                  (!DEVICE_ADAPTERS[deviceId] && !externalVersion)) && (
+                  <p className="support-note">
+                    {STANDALONE
+                      ? "离线版包含机身与系统界面，不含游戏核心。"
+                      : "本机型目前提供系统界面，游戏核心尚未接入。"}
+                  </p>
+                )}
+              </div>
+            </details>
           </>
-        )}
-        {!!DEVICE_ADAPTERS[deviceId] && game && !STANDALONE && (
-          <button
-            className="eject-button"
-            onClick={() =>
-              void guarded(async () => {
-                await stop();
-                setGame(undefined);
-                selectedGames.current[selectionKey(deviceId)] = "";
-                await storage.putSetting(settingKey(deviceId), "");
-              })
-            }
-          >
-            拔出卡带
-          </button>
-        )}
-        <span className="dock-divider" />
+        }
+      />
+      <div className="studio-dock">
         <button
           className="mobile-tools-button"
           aria-label="操作与设置"

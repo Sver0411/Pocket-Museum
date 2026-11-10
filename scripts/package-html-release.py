@@ -13,10 +13,11 @@ with ZipFile(out, 'w', ZIP_DEFLATED, compresslevel=9) as archive:
     archive.write(root / 'LICENSE', 'LICENSE.txt')
     for file in sorted((root / 'public' / 'licenses').glob('*')):
         if file.is_file(): archive.write(file, 'licenses/' + file.name)
-    for name in ['DEVELOPMENT_STAGES.md', 'EXTERNAL_EMULATORS.md', 'SYSTEM_RESOURCES.md', 'research/THREEDS_VISUAL_SPEC.md', 'research/PSP_VISUAL_SPEC.md', 'research/VITA_VISUAL_SPEC.md', 'research/EXTERNAL_EMULATOR_PROTOCOL.md', 'research/THIRD_PARTY_UI.md', 'research/EMULATOR_FEASIBILITY.md', 'research/EXISTING_SYSTEMS_AUDIT.md', 'ACCEPTANCE.md', 'CONTROL_AUDIT.md', 'design/ASSETS.md', 'design/THEMES.md', 'design/FLAT_PROMPTS.md', 'research/NATIVE_SYSTEMS.md', 'research/CLAMSHELL.md']:
+    for name in ['DEVELOPMENT_STAGES.md', 'EXTERNAL_EMULATORS.md', 'SYSTEM_RESOURCES.md', 'research/THREEDS_VISUAL_SPEC.md', 'research/PSP_VISUAL_SPEC.md', 'research/VITA_VISUAL_SPEC.md', 'research/EXTERNAL_EMULATOR_PROTOCOL.md', 'research/THIRD_PARTY_UI.md', 'research/EMULATOR_FEASIBILITY.md', 'research/EXISTING_SYSTEMS_AUDIT.md', 'ACCEPTANCE.md', 'CONTROL_AUDIT.md', 'design/ASSETS.md', 'design/THEMES.md', 'design/STAGE8_PRESENTATIONS.md', 'research/STAGE7_SRAM.md', 'research/STAGE7_SRAM_EVIDENCE.json', 'design/FLAT_PROMPTS.md', 'research/NATIVE_SYSTEMS.md', 'research/CLAMSHELL.md']:
         archive.write(root / 'docs' / name, 'docs/' + name)
     for folder in ['current']:
-        for file in sorted((root / 'docs' / 'screenshots' / folder).glob('*.png')):
+        for file in sorted((root / 'docs' / 'screenshots' / folder).iterdir()):
+            if file.suffix not in {'.png', '.md', '.json'}: continue
             archive.write(file, 'docs/screenshots/' + folder + '/' + file.name)
     for file in sorted((root / 'docs' / 'screenshots').glob('flat-*.png')):
         archive.write(file, 'docs/screenshots/' + file.name)

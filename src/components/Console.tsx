@@ -29,6 +29,9 @@ interface Props {
   light: boolean;
   onLight: () => void;
   onPower: () => void;
+  powerDisabled?: boolean;
+  onCartridge?: () => void;
+  cartridgeName?: string;
   onFold: () => void;
   foldDisabled?: boolean;
   onLidMotion: () => void;
@@ -51,6 +54,9 @@ export function Console({
   light,
   onLight,
   onPower,
+  powerDisabled,
+  onCartridge,
+  cartridgeName,
   onFold,
   foldDisabled = false,
   onLidMotion,
@@ -340,6 +346,27 @@ export function Console({
         )}
 
         <div className="hinge-occlusion" />
+        {d.powerKey && (
+          <button
+            className={`photo-power power-button ${powered ? "powered" : ""}`}
+            disabled={powerDisabled}
+            title={powered ? "关闭电源" : "开启电源"}
+            style={percentRect(
+              closed && d.folded
+                ? {
+                    x: d.folded.x + d.folded.w - 18,
+                    y: d.folded.y + d.folded.h * 0.68,
+                    w: 28,
+                    h: 55,
+                  }
+                : d.powerKey,
+              d.width,
+              d.height,
+            )}
+            onClick={onPower}
+            aria-label={powered ? "关闭电源" : "开启电源"}
+          />
+        )}
         <div className="base-plane">
           <img
             className="device-photo base-face"
@@ -447,14 +474,6 @@ export function Console({
                 style={percentRect(k, d.width, d.height)}
               />
             ))}
-          {d.powerKey && (
-            <button
-              className="photo-power"
-              style={percentRect(d.powerKey, d.width, d.height)}
-              onClick={onPower}
-              aria-label={powered ? "关闭电源" : "开启电源"}
-            />
-          )}
           {d.led && (
             <i
               className={`photo-led ${powered ? "on" : ""}`}
@@ -463,6 +482,27 @@ export function Console({
           )}
         </div>
       </div>
+      {onCartridge && (
+        <button
+          className="console-cartridge cartridge-button"
+          aria-label="选择卡带"
+          onClick={onCartridge}
+          title={cartridgeName ? `更换 ${cartridgeName}` : "选择卡带"}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            aria-hidden="true"
+          >
+            <path d="M5 3h14v18H5zM8 3v5h8V3M9 17h6M9 19h6" />
+          </svg>
+          <span>{cartridgeName || "选择卡带"}</span>
+        </button>
+      )}
     </div>
   );
 }

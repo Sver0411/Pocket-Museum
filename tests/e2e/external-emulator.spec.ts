@@ -7,6 +7,7 @@ async function openConnection(page: Page) {
   if ((await more.getAttribute("open")) === null)
     await more.locator("summary").click();
   await page.getByRole("button", { name: /^(连接模拟器|模拟器连接)$/ }).click();
+  await expect(more).toHaveJSProperty("open", false);
 }
 
 test("external connection renders shared video, keeps analog separate and releases inputs on exit", async ({

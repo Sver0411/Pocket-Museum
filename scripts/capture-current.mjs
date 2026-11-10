@@ -17,8 +17,10 @@ try {
   await mkdir(dir, { recursive: true });
   const capture = async (name) => {
     const path = `${dir}/${name}.png`;
+    await p.mouse.move(0, 0);
+    await expect(p.locator(".error-banner")).toHaveCount(0);
     await p.screenshot({ path, fullPage: true });
-    paths.push(path);
+    if (!paths.includes(path)) paths.push(path);
   };
   await p.goto(origin);
   await expect(p.locator(".museum-exhibit")).toHaveCount(7);
@@ -52,6 +54,10 @@ try {
       );
     await p.waitForTimeout(250);
     await capture(id);
+    if (["3ds", "psp", "vita"].includes(id)) await capture(`${id}-system`);
+    await p.setViewportSize({ width: 390, height: 844 });
+    await capture(`${id}-mobile`);
+    await p.setViewportSize({ width: 1440, height: 1000 });
   }
   for (const [id, demo] of [
     ["gb", "GB Snake"],

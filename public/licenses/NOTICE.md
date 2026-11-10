@@ -73,3 +73,7 @@ Vita3K GPL-2.0-or-later source commit `a01f2b15b6b4149a80f531e56df351369ebc2e55`
 PSP layout numbers are cross-checked against the GPLv3 sources of [VitaXMB](https://github.com/dekiller82/VitaXMB/tree/b2512e46a8562ed4f2203b63647e89bd2b96b9ef) (dekiller82 and contributors) and [PTF-Studio](https://github.com/S1implyBlue/PTF-Studio/tree/3b2c6407201bf02a22412725c9009a52bbdf1517) (S1implyBlue and contributors). Their firmware-derived or separately restricted icon/font/audio/wave assets are excluded. The numerical provenance and original source links are recorded in `docs/research/PSP_VISUAL_SPEC.md`.
 
 `ReferenceIcons.tsx` contains independently constructed vector reconstructions from official visual references, not firmware image extractions. They are not represented as pixel-identical official assets. Sony/Nintendo research screenshots remain in ignored local research directories and are not redistributed. User-provided local resource packs are stored only in that user's browser and are not included in source releases or HTML distributions.
+
+## Museum system-screen previews
+
+`assets/previews/*.png` are browser captures of Pocket Museum's own native UI reconstruction components (2026-11-10). They are used as static exhibit previews on the homepage, and contain no extracted firmware files or commercial-game screenshots. Source components and upstream geometry notices are listed above; the project license applies to the original presentation work.

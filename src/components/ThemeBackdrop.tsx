@@ -10,6 +10,52 @@ export function ThemeBackdrop({ device }: { device: DeviceId | "museum" }) {
       aria-hidden="true"
     >
       <div className="scene-light" />
+      {device === "gba" && (
+        <svg
+          className="scene-y2k"
+          viewBox="0 0 1600 1000"
+          preserveAspectRatio="xMidYMid slice"
+          fill="none"
+          stroke="currentColor"
+        >
+          <ellipse
+            cx="800"
+            cy="500"
+            rx="650"
+            ry="330"
+            transform="rotate(-16 800 500)"
+          />
+          <ellipse
+            cx="800"
+            cy="500"
+            rx="730"
+            ry="370"
+            transform="rotate(-16 800 500)"
+          />
+          <path d="M120 500h30m-15-15v30M1450 720h30m-15-15v30" />
+        </svg>
+      )}
+      {device === "ds" && (
+        <div className="scene-ds-panels">
+          <i />
+          <i />
+        </div>
+      )}
+      {device === "3ds" && (
+        <svg className="scene-home-tiles" viewBox="0 0 1600 1000" fill="none">
+          <rect x="60" y="160" width="100" height="100" rx="26" />
+          <rect x="1330" y="730" width="140" height="140" rx="36" />
+          <rect x="1310" y="190" width="65" height="65" rx="17" />
+          <rect x="120" y="780" width="55" height="55" rx="14" />
+        </svg>
+      )}
+      {device === "vita" && (
+        <div className="scene-vita-bubbles">
+          <i />
+          <i />
+          <i />
+        </div>
+      )}
       <svg
         className="scene-curves"
         viewBox="0 0 1600 1000"

@@ -19,6 +19,27 @@ const result = await build({
 });
 let javascript = result.outputFiles.find((f) => f.path.endsWith(".js")).text;
 for (const file of [
+  "gb-0",
+  "gba-0",
+  "sp-0",
+  "ds-0",
+  "ds-1",
+  "3ds-0",
+  "3ds-1",
+  "psp-0",
+  "vita-0",
+]) {
+  const path = `/assets/previews/${file}.png`;
+  javascript = javascript.replaceAll(
+    JSON.stringify(path),
+    JSON.stringify(
+      "data:image/png;base64," +
+        (await readFile("public" + path)).toString("base64"),
+    ),
+  );
+}
+
+for (const file of [
   "switch6",
   "switch7",
   "rollover1",
@@ -73,7 +94,7 @@ for (const device of DEVICES) {
       JSON.stringify("data:image/png;base64," + flatImage.toString("base64")),
     );
   }
-  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>${device.name} · Pocket Museum 单文件版</title><style>${css}</style></head><body><div id="root"></div><script>window.__POCKETSP_STANDALONE__=true;window.__POCKETSP_DEVICE__=${JSON.stringify(device.id)};</script><script>${code}</script></body></html>`;
+  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${device.name} · Pocket Museum 单文件版</title><style>${css}</style></head><body><div id="root"></div><script>window.__POCKETSP_STANDALONE__=true;window.__POCKETSP_DEVICE__=${JSON.stringify(device.id)};</script><script>${code}</script></body></html>`;
   const file = "public/standalone/" + device.id + ".html";
   await writeFile(file, html);
   outputs.push({

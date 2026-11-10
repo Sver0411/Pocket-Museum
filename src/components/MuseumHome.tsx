@@ -11,6 +11,16 @@ export const MODEL_CODES: Record<DeviceId, string> = {
   psp: "PSP-1000",
   vita: "PCH-1000",
 };
+// Browser captures of this project's native screen implementations.
+export const SYSTEM_PREVIEWS: Record<DeviceId, string[]> = {
+  gb: ["/assets/previews/gb-0.png"],
+  gba: ["/assets/previews/gba-0.png"],
+  sp: ["/assets/previews/sp-0.png"],
+  ds: ["/assets/previews/ds-0.png", "/assets/previews/ds-1.png"],
+  "3ds": ["/assets/previews/3ds-0.png", "/assets/previews/3ds-1.png"],
+  psp: ["/assets/previews/psp-0.png"],
+  vita: ["/assets/previews/vita-0.png"],
+};
 export function MuseumHome({ onSelect }: { onSelect: (id: DeviceId) => void }) {
   const [loaded, setLoaded] = useState<Partial<Record<DeviceId, boolean>>>({});
   useEffect(() => {
@@ -18,8 +28,14 @@ export function MuseumHome({ onSelect }: { onSelect: (id: DeviceId) => void }) {
     for (const device of DEVICES) {
       const image = new Image();
       image.src = device.asset;
-      void image
-        .decode()
+      void Promise.all([
+        image.decode(),
+        ...SYSTEM_PREVIEWS[device.id].map((path) => {
+          const preview = new Image();
+          preview.src = path;
+          return preview.decode();
+        }),
+      ])
         .then(() => {
           if (active) setLoaded((v) => ({ ...v, [device.id]: true }));
         })
@@ -64,6 +80,25 @@ export function MuseumHome({ onSelect }: { onSelect: (id: DeviceId) => void }) {
                 viewBox={`${d.viewport?.x ?? 0} ${d.viewport?.y ?? 0} ${d.viewport?.w ?? d.width} ${d.viewport?.h ?? d.height}`}
               >
                 <image href={d.asset} width={d.width} height={d.height} />
+                {d.screens.map((screen, index) => (
+                  <image
+                    key={index}
+                    className="exhibit-screen-preview"
+                    href={SYSTEM_PREVIEWS[d.id][index]}
+                    x={screen.x}
+                    y={screen.y}
+                    width={screen.w}
+                    height={screen.h}
+                    preserveAspectRatio="none"
+                    style={
+                      screen.quad
+                        ? {
+                            clipPath: `polygon(${screen.quad.map(([x, y]) => `${((x - screen.x) / screen.w) * 100}% ${((y - screen.y) / screen.h) * 100}%`).join(",")})`,
+                          }
+                        : undefined
+                    }
+                  />
+                ))}
               </svg>
             </div>
             <span className="exhibit-label">

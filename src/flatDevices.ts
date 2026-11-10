@@ -87,7 +87,7 @@ export const FLAT_VIEWS: Partial<Record<DeviceId, Partial<DeviceDefinition>>> =
         { button: "L", x: 15, y: 666, w: 137, h: 87 },
         { button: "R", x: 995, y: 666, w: 137, h: 87 },
       ],
-      powerKey: undefined,
+      powerKey: { x: 1110, y: 1010, w: 25, h: 72 },
       led: undefined,
       utilityKeys: undefined,
       analogs: undefined,
