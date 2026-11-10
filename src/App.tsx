@@ -538,9 +538,12 @@ export default function App() {
       void audioManager.play("shutdown");
     input.setEnabled(false);
     if (external.current) disconnectExternal();
+    const wasRunning = statusRef.current === "running";
     try {
+      if (bridge.current) await bridge.current.pause(true);
       await persistNative();
     } catch (e) {
+      if (wasRunning) await bridge.current?.pause(false).catch(report);
       input.setEnabled(statusRef.current === "running");
       throw e;
     }

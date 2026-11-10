@@ -12,7 +12,8 @@
     "verify:assets": "node scripts/verify-assets.mjs",
     "build:standalone": "node scripts/build-standalone.mjs",
     "test:production": "node scripts/verify-production.mjs",
-    "package:release": "python3 scripts/package-html-release.py"
+    "package:release": "python3 scripts/package-html-release.py",
+    "verify": "npm run verify:assets && tsc -b"
   },
   "dependencies": {
     "react": "19.1.1",

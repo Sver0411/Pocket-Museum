@@ -1,0 +1,75 @@
+{
+  "gameId": "6c6cfe318b1c724a29c5e08516a15e5ace354e32b2a04a08d388cfeb4c65ee58",
+  "core": "mgba",
+  "version": "4.2.3",
+  "before": {
+    "frame": 292,
+    "path": "/data/saves/mGBA/6c6cfe318b1c724a29c5e08516a15e5ace354e32b2a04a08d388cfeb4c65ee58.srm",
+    "memory": {
+      "length": 32768,
+      "sha256": "49b54df964220f5d51af2df9c1a257836f025a5dd54c338daa78c1b2fede57b8"
+    },
+    "filesystem": {
+      "length": 32768,
+      "sha256": "49b54df964220f5d51af2df9c1a257836f025a5dd54c338daa78c1b2fede57b8"
+    },
+    "exported": {
+      "length": 32768,
+      "sha256": "49b54df964220f5d51af2df9c1a257836f025a5dd54c338daa78c1b2fede57b8"
+    }
+  },
+  "indexedDB": {
+    "length": 32768,
+    "sha256": "49b54df964220f5d51af2df9c1a257836f025a5dd54c338daa78c1b2fede57b8"
+  },
+  "startup": {
+    "frame": 0,
+    "preloaded": {
+      "length": 32768,
+      "sha256": "49b54df964220f5d51af2df9c1a257836f025a5dd54c338daa78c1b2fede57b8"
+    },
+    "provisionalExport": {
+      "length": 131072,
+      "sha256": "5288f52e4a5081a56945b3d5ee6b290acf14e9eaf60532b06d13d95b84222621"
+    },
+    "provisionalDifferences": {
+      "count": 98304,
+      "first": 32768,
+      "actualAtFirst": 255
+    }
+  },
+  "after": {
+    "frame": 109,
+    "path": "/data/saves/mGBA/6c6cfe318b1c724a29c5e08516a15e5ace354e32b2a04a08d388cfeb4c65ee58.srm",
+    "memory": {
+      "length": 32768,
+      "sha256": "49b54df964220f5d51af2df9c1a257836f025a5dd54c338daa78c1b2fede57b8"
+    },
+    "filesystem": {
+      "length": 32768,
+      "sha256": "49b54df964220f5d51af2df9c1a257836f025a5dd54c338daa78c1b2fede57b8"
+    },
+    "exported": {
+      "length": 32768,
+      "sha256": "49b54df964220f5d51af2df9c1a257836f025a5dd54c338daa78c1b2fede57b8"
+    }
+  },
+  "differences": {
+    "memory": {
+      "count": 0,
+      "first": -1
+    },
+    "filesystem": {
+      "count": 0,
+      "first": -1
+    },
+    "indexedDB": {
+      "count": 0,
+      "first": -1
+    },
+    "exported": {
+      "count": 0,
+      "first": -1
+    }
+  }
+}

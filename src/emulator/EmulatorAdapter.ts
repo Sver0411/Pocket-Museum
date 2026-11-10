@@ -6,13 +6,18 @@ interface GameManager {
   simulateInput: (player: number, index: number, value: number) => void;
   getState: () => Uint8Array;
   loadState: (data: Uint8Array) => void;
-  getSaveFile: () => Uint8Array | null;
+  getSaveFile: (flush?: boolean) => Uint8Array | null;
+  functions: { getFrameNum: () => number };
+  mountFileSystems: () => Promise<void>;
   getSaveFilePath: () => string;
   loadSaveFiles: () => void;
   FS: {
     analyzePath: (p: string) => { exists: boolean };
     mkdir: (p: string) => void;
+    filesystems: { MEMFS: unknown };
+    mount: (type: unknown, options: object, path: string) => void;
     writeFile: (p: string, b: Uint8Array) => void;
+    unlink: (p: string) => void;
   };
 }
 interface Engine {
@@ -20,11 +25,14 @@ interface Engine {
   pause: () => void;
   play: () => void;
   setVolume: (n: number) => void;
+  on: (event: string, callback: () => void) => void;
+  startButtonClicked: (button: HTMLElement) => void;
   Module?: unknown;
 }
 declare global {
   interface Window {
     EJS_emulator?: Engine;
+    EJS_GameManager?: { prototype: GameManager };
     [key: `EJS_${string}`]: unknown;
   }
 }
@@ -78,7 +86,7 @@ export class EmulatorAdapter {
         EJS_gameName: gameId,
         EJS_gameUrl: url,
         EJS_pathtodata: "/vendor/emulatorjs/4.2.3/data/",
-        EJS_startOnLoaded: true,
+        EJS_startOnLoaded: false,
         EJS_language: "en-US",
         EJS_disableAutoLang: false,
         EJS_noAutoFocus: true,
@@ -99,7 +107,7 @@ export class EmulatorAdapter {
                 desmume_pointer_type: "touch",
               }
             : {}),
-          "save-save-files-interval": 0,
+          "save-save-interval": 0,
           "virtual-gamepad": "disabled",
         },
         EJS_Buttons: {
@@ -122,11 +130,40 @@ export class EmulatorAdapter {
           cacheManager: false,
           exitEmulation: false,
         },
-        EJS_onGameStart: () => {
+        EJS_ready: () => {
+          const engine = window.EJS_emulator!;
+          // Each iframe owns one pinned GameManager. Use session MEMFS instead
+          // of mounting EJS's auto-persisting IDBFS: Pocket Museum owns storage.
+          window.EJS_GameManager!.prototype.mountFileSystems =
+            async function () {
+              for (const path of ["/data", "/data/saves"])
+                if (!this.FS.analyzePath(path).exists) this.FS.mkdir(path);
+              this.FS.mount(this.FS.filesystems.MEMFS, {}, "/data/saves");
+            };
+          // Register before starting the download: the save must exist before
+          // callMain/retro_load_game and mGBA's deferred first-frame setup.
+          engine.on("saveDatabaseLoaded", () => {
+            const gm = engine.gameManager;
+            if (nativeSave?.length) {
+              const directory = core === "mgba" ? "mGBA" : "DeSmuME";
+              this.writeNative(
+                gm,
+                `/data/saves/${directory}/${gameId}.srm`,
+                nativeSave,
+              );
+            }
+          });
+          const button =
+            document.querySelector<HTMLElement>(".ejs_start_button");
+          if (!button) return fail("无法启动模拟器");
+          engine.startButtonClicked(button);
+        },
+        EJS_onGameStart: async () => {
           try {
             this.running = true;
             if (this.system === "nds") this.captureDualScreen();
-            if (nativeSave?.length) this.loadNative(nativeSave);
+            await this.waitForNativeReady(nativeSave);
+
             clearTimeout(timeout);
             observer.disconnect();
             URL.revokeObjectURL(url);
@@ -141,6 +178,36 @@ export class EmulatorAdapter {
       script.onerror = () => fail("无法加载 EmulatorJS 资源");
       document.body.append(script);
     });
+  }
+  private async waitForNativeReady(nativeSave?: Uint8Array) {
+    const gm = this.engine.gameManager;
+    const deadline = performance.now() + 15000;
+    // EJS's start event precedes retro_run. mGBA reports a 128 KiB
+    // AUTODETECT buffer until the ROM first accesses its SRAM/EEPROM/flash.
+    // Do not expose that provisional buffer as a successfully restored save.
+    while (true) {
+      const hasRun = gm.functions.getFrameNum() > 0;
+      const detecting =
+        this.system === "gba" &&
+        nativeSave?.length &&
+        nativeSave.length < 128 * 1024 &&
+        gm.getSaveFile()?.length !== nativeSave.length;
+      if (hasRun && !detecting) return;
+      if (performance.now() >= deadline)
+        throw new Error("核心尚未完成原生存档初始化，请重新开机");
+      await new Promise<void>((resolve) => setTimeout(resolve, 16));
+    }
+  }
+  private writeNative(gm: GameManager, path: string, data: Uint8Array) {
+    const dirs = path.split("/").slice(0, -1);
+    let current = "";
+    for (const dir of dirs) {
+      if (!dir) continue;
+      current += "/" + dir;
+      if (!gm.FS.analyzePath(current).exists) gm.FS.mkdir(current);
+    }
+    if (gm.FS.analyzePath(path).exists) gm.FS.unlink(path);
+    gm.FS.writeFile(path, new Uint8Array(data));
   }
   private captureDualScreen() {
     const output = document.createElement("canvas");
@@ -213,14 +280,7 @@ export class EmulatorAdapter {
   loadNative(data: Uint8Array) {
     const gm = this.engine.gameManager,
       path = gm.getSaveFilePath();
-    const dirs = path.split("/").slice(0, -1);
-    let current = "";
-    for (const dir of dirs) {
-      if (!dir) continue;
-      current += "/" + dir;
-      if (!gm.FS.analyzePath(current).exists) gm.FS.mkdir(current);
-    }
-    gm.FS.writeFile(path, data);
+    this.writeNative(gm, path, data);
     gm.loadSaveFiles();
   }
 }

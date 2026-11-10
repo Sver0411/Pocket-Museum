@@ -1,6 +1,12 @@
 import { test, expect } from "@playwright/test";
 import type { Page, Frame } from "@playwright/test";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import {
+  nativeSnapshot,
+  nativeRecord,
+  fingerprint,
+  differences,
+} from "./native-save-evidence";
 async function boot(page: Page) {
   await page.goto("/#/play/sp");
   await expect(page.locator(".power-button")).toBeEnabled();
@@ -112,6 +118,32 @@ test("real mGBA boots entirely from local assets and responds to physical input"
 test("savestate and native SRAM survive power cycles and page reloads", async ({
   page,
 }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "EJS_emulator", {
+      configurable: true,
+      set(engine) {
+        Object.defineProperty(window, "EJS_emulator", {
+          value: engine,
+          writable: true,
+          configurable: true,
+        });
+        engine.on("start", () => {
+          const gm = engine.gameManager;
+          const path = gm.getSaveFilePath();
+          const disk = gm.FS.analyzePath(path).exists
+            ? Array.from(gm.FS.readFile(path))
+            : [];
+          // Deliberately exercise the API at frame zero, before detection finishes.
+          const early = Array.from(gm.getSaveFile() || []);
+          (window as any).__bootSave = {
+            frame: gm.functions.getFrameNum(),
+            disk,
+            early,
+          };
+        });
+      },
+    });
+  });
   const frame = await boot(page);
   await key(page, "x");
   for (const direction of ["ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp"])
@@ -127,14 +159,20 @@ test("savestate and native SRAM survive power cycles and page reloads", async ({
   expect(state.length).toBeGreaterThan(1000);
   await key(page, "Enter");
   await page.waitForTimeout(500);
-  const native = await frame.evaluate(() =>
-    Array.from((window as any).EJS_emulator.gameManager.getSaveFile() || []),
-  );
+  const before = await nativeSnapshot(frame);
+  const native = before.exported;
+  expect(before.memory).toEqual(native);
+  expect(before.filesystem).toEqual(native);
   expect(native.length).toBeGreaterThan(0);
   expect(native.some((x) => x !== 0 && x !== 255)).toBe(true);
   await page.locator(".power-button").click();
   await expect(page.getByTestId("emulator-status")).toHaveText("电源关闭");
+  const stored = await nativeRecord(page);
+  expect(stored.data).toEqual(native);
+  expect(stored.core).toBe("mgba");
+  expect(stored.version).toBe("4.2.3");
   await page.reload();
+  expect((await nativeRecord(page)).data).toEqual(native);
   await expect(
     page.getByRole("button", { name: "读取存档", exact: true }),
   ).toBeDisabled();
@@ -143,9 +181,63 @@ test("savestate and native SRAM survive power cycles and page reloads", async ({
     timeout: 65000,
   });
   const next = page.frames().find((f) => f.url().includes("/emulator.html"))!;
-  const restored = await next.evaluate(() =>
-    Array.from((window as any).EJS_emulator.gameManager.getSaveFile() || []),
+  const bootSave = await next.evaluate(
+    () =>
+      (window as any).__bootSave as {
+        frame: number;
+        disk: number[];
+        early: number[];
+      },
   );
+  expect(bootSave.disk).toEqual(native);
+  const after = await nativeSnapshot(next);
+  const restored = after.exported;
+  const evidence = JSON.stringify(
+    {
+      gameId: stored.gameId,
+      core: stored.core,
+      version: stored.version,
+      before: {
+        frame: before.frame,
+        path: before.path,
+        memory: fingerprint(before.memory),
+        filesystem: fingerprint(before.filesystem),
+        exported: fingerprint(native),
+      },
+      indexedDB: fingerprint(stored.data),
+      startup: {
+        frame: bootSave.frame,
+        preloaded: fingerprint(bootSave.disk),
+        provisionalExport: fingerprint(bootSave.early),
+        provisionalDifferences: differences(native, bootSave.early),
+      },
+      after: {
+        frame: after.frame,
+        path: after.path,
+        memory: fingerprint(after.memory),
+        filesystem: fingerprint(after.filesystem),
+        exported: fingerprint(restored),
+      },
+      differences: {
+        memory: differences(native, after.memory),
+        filesystem: differences(native, after.filesystem),
+        indexedDB: differences(native, stored.data),
+        exported: differences(native, restored),
+      },
+    },
+    null,
+    2,
+  );
+  const evidencePath = test.info().outputPath("native-save-evidence.json");
+  await writeFile(evidencePath, evidence);
+  await test
+    .info()
+    .attach("native-save-evidence.json", {
+      contentType: "application/json",
+      path: evidencePath,
+    });
+  expect(after.memory).toEqual(native);
+  expect(after.filesystem).toEqual(native);
   expect(restored).toEqual(native);
   await page.getByRole("button", { name: "读取存档", exact: true }).click();
   await expect(page.getByText("即时存档已读取", { exact: true })).toBeVisible();
