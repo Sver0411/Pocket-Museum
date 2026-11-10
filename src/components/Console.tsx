@@ -205,13 +205,14 @@ export function Console({
       </div>
     );
   };
-  const photoStyle = d.lid
-    ? {
-        backgroundImage: `url(${d.asset})`,
-        backgroundSize: `${(d.width / d.lid!.w) * 100}% ${(d.height / d.lid!.h) * 100}%`,
-        backgroundPosition: `${(d.lid!.x / (d.width - d.lid!.w)) * 100}% ${(d.lid!.y / (d.height - d.lid!.h)) * 100}%`,
-      }
-    : {};
+  const photoStyle =
+    d.lid && !focus
+      ? {
+          backgroundImage: `url(${d.asset})`,
+          backgroundSize: `${(d.width / d.lid!.w) * 100}% ${(d.height / d.lid!.h) * 100}%`,
+          backgroundPosition: `${(d.lid!.x / (d.width - d.lid!.w)) * 100}% ${(d.lid!.y / (d.height - d.lid!.h)) * 100}%`,
+        }
+      : {};
   return (
     <div
       ref={stage}

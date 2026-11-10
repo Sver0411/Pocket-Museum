@@ -6,14 +6,14 @@
       "height": 1000
     },
     "before": {
-      "w": 261.078125,
-      "h": 230.9375
+      "w": 253.40625,
+      "h": 224.140625
     },
     "after": {
       "w": 748.875,
       "h": 673.984375
     },
-    "screenWidthGain": 2.8683942785325276,
+    "screenWidthGain": 2.9552349241583427,
     "path": "docs/screenshots/stage9/after/gb-focus-1440x1000.png"
   },
   {
@@ -23,14 +23,14 @@
       "height": 1000
     },
     "before": {
-      "w": 356.7777099609375,
-      "h": 237.84658813476562
+      "w": 346.29022216796875,
+      "h": 230.8497314453125
     },
     "after": {
       "w": 1011,
       "h": 674
     },
-    "screenWidthGain": 2.833697206338062,
+    "screenWidthGain": 2.9195164497298816,
     "path": "docs/screenshots/stage9/after/sp-focus-1440x1000.png"
   },
   {
@@ -40,14 +40,14 @@
       "height": 844
     },
     "before": {
-      "w": 190.96875,
-      "h": 168.90625
+      "w": 190.359375,
+      "h": 168.375
     },
     "after": {
       "w": 362,
       "h": 325.796875
     },
-    "screenWidthGain": 1.8955981017836687,
+    "screenWidthGain": 1.9016662562587212,
     "path": "docs/screenshots/stage9/after/gb-focus-390x844.png"
   },
   {
@@ -74,14 +74,14 @@
       "height": 568
     },
     "before": {
-      "w": 119.96875,
-      "h": 106.109375
+      "w": 112.296875,
+      "h": 99.328125
     },
     "after": {
       "w": 292,
       "h": 262.796875
     },
-    "screenWidthGain": 2.433967178952852,
+    "screenWidthGain": 2.600250452205371,
     "path": "docs/screenshots/stage9/after/gb-focus-320x568.png"
   },
   {
@@ -91,14 +91,14 @@
       "height": 568
     },
     "before": {
-      "w": 163.94903564453125,
-      "h": 109.28890228271484
+      "w": 153.44589233398438,
+      "h": 102.29203796386719
     },
     "after": {
       "w": 292,
       "h": 194.65625
     },
-    "screenWidthGain": 1.781041278175643,
+    "screenWidthGain": 1.9029509070496597,
     "path": "docs/screenshots/stage9/after/sp-focus-320x568.png"
   },
   {
@@ -108,14 +108,14 @@
       "height": 390
     },
     "before": {
-      "w": 81.265625,
-      "h": 71.875
+      "w": 73.578125,
+      "h": 65.078125
     },
     "after": {
       "w": 311.109375,
       "h": 279.984375
     },
-    "screenWidthGain": 3.828302249567391,
+    "screenWidthGain": 4.228286260352516,
     "path": "docs/screenshots/stage9/after/gb-focus-844x390.png"
   },
   {
@@ -125,14 +125,14 @@
       "height": 390
     },
     "before": {
-      "w": 111.04202270507812,
-      "h": 74.02281188964844
+      "w": 100.55459594726562,
+      "h": 67.02593231201172
     },
     "after": {
       "w": 420,
       "h": 280
     },
-    "screenWidthGain": 3.7823518499433164,
+    "screenWidthGain": 4.176835439926215,
     "path": "docs/screenshots/stage9/after/sp-focus-844x390.png"
   }
 ]

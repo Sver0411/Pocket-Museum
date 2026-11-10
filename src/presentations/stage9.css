@@ -536,3 +536,7 @@
     font-size: 10px;
   }
 }
+/* Full photo bounds include the lower shell beyond its cropped viewport. */
+.play-view:not(.focus-play) .console-stage {
+  max-height: calc(100% - 24px);
+}
