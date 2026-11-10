@@ -6,7 +6,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 root = Path(__file__).resolve().parent.parent
 out = root / 'releases' / 'pocket-museum-html.zip'
 out.parent.mkdir(parents=True, exist_ok=True)
-readme = '''Pocket Museum 离线 HTML 交付\n\n双击 pocket-museum-all.html 可在七台掌机之间切换；每个其他 HTML 对应一台掌机。\n文件内嵌机身图片、JS、CSS、交互控件、三种翻盖姿态与当前系统 UI，可断网运行。\n开机显示对应的无卡启动页或系统界面，实体方向/面键和触屏可以操作。\n\n这些文件不包含游戏模拟器核心。真实 GB/GBA/NDS 游戏请用完整项目主页面的 GB / GBA / GBA SP / DS：选择卡带，再开启电源。\n完整 1:1 外壳和全部原版系统应用尚未完成。逐机覆盖、未完成项与官方资料见 docs/research/NATIVE_SYSTEMS.md。\n按用户要求排除 Nintendo 厂商 Logo。\n\n系统设置仅保存在本机浏览器。直接 file:// 打开时部分浏览器可能限制存储，但不影响基本界面操作。\n'''
+readme = '''Pocket Museum 单文件体验\n\n一座可以在浏览器里把玩的掌机博物馆。\n\n打开 pocket-museum-all.html 可进入七机展馆；其余七个 HTML 分别对应一款掌机。页面呈现经典机身、系统界面、实体按键、主题背景、声音与翻盖交互。\n\n完整项目提供 GB、GBA、NDS 游戏运行、卡带导入与进度管理。设置通过浏览器本地存储保存。\n\n项目源码：https://github.com/Sver0411/Pocket-Museum\n项目代码采用 GPL-3.0-or-later，相关资源来源与协议收录于 licenses 和 docs。\n'''
 with ZipFile(out, 'w', ZIP_DEFLATED, compresslevel=9) as archive:
     for file in sorted((root / 'public' / 'standalone').glob('*.html')):
         archive.write(file, file.name)
