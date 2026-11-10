@@ -77,3 +77,10 @@ PSP layout numbers are cross-checked against the GPLv3 sources of [VitaXMB](http
 ## Museum system-screen previews
 
 `assets/previews/*.png` are browser captures of Pocket Museum's own native UI reconstruction components (2026-11-10). They are used as static exhibit previews on the homepage, and contain no extracted firmware files or commercial-game screenshots. Source components and upstream geometry notices are listed above; the project license applies to the original presentation work.
+
+## Tobu Tobu Girl Deluxe
+
+- Unmodified `tobudx.gb`, 262144 bytes, SHA-256 `0a0e8018dbbc8d7f8cd99f05e7cdc7b4cc9e358ecfe9377ebfb2291a84c6e310`, downloaded from [Tangram Games on itch.io](https://tangramgames.itch.io/tobu-tobu-girl-deluxe), upload 1739588.
+- Code: Simon Larsen and Tangram Games, [MIT](Tobu-Tobu-Girl-DX-MIT.txt). Graphics: Simon Larsen / Tangram Games; music and sound: potato-tan. All images, text, sound and music: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), as stated in the author's README. The game binary is unmodified.
+- [Official project and credits](https://tangramgames.dk/tobutobugirldx/), [source](https://github.com/SimonLarsen/tobutobugirl-dx/tree/4985d4d282aa43229f250ffa3b0d86998ebd55d3), [bundled source and original README](source/Tobu-Tobu-Girl-DX-4985d4d.tar.gz).
+- Upstream build dependencies: GBDK 2.96, GBDK-n, SDCC 3.8.0, pyimgtogb and mmlgb. Existing GBDK library/runtime notices remain bundled; the ROM is the author's release rather than a locally rebuilt binary. Compiler executables are not distributed.

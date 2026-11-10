@@ -13,7 +13,8 @@ try {
   });
   const p = await context.newPage();
   p.on("pageerror", (e) => errors.push(e.message));
-  const dir = "docs/screenshots/current";
+  const dir =
+    process.env.POCKET_MUSEUM_CAPTURE_DIR || "docs/screenshots/current";
   await mkdir(dir, { recursive: true });
   const capture = async (name) => {
     const path = `${dir}/${name}.png`;
@@ -79,6 +80,8 @@ try {
     if (id === "gb") {
       await key("Start");
       await p.waitForTimeout(200);
+      await key("Start");
+      await key("Right");
     } else if (id !== "ds") {
       await key("A");
       await key("Up");

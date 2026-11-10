@@ -34,9 +34,11 @@ Game Boy 使用橄榄绿像素边框，GBA 搭配透明紫色与 Y2K 玻璃控�
 
 ## 游戏与进度
 
-EmulatorJS 配合 mGBA、DeSmuME，提供 GB、GBA 和 NDS 游戏体验。项目内置 GB Snake、2048 Advance 与 JamClown，也支持从本地文件选择卡带。
+EmulatorJS 配合 mGBA、DeSmuME，提供 GB、GBA 和 NDS 游戏体验。项目内置 Tobu Tobu Girl Deluxe、GB Snake、2048 Advance 与 JamClown，也支持从本地文件选择卡带。卡带库提供插卡与直接游玩两种操作，ROM 在启动时读取。
 
-选择卡带并开启电源，就能使用机身按键游玩。原生存档、即时存档以及存档导入导出连接起每次游戏；游戏、媒体和设置通过浏览器本地存储保存。
+Game Boy 与 GBA SP 提供专注模式，将屏幕按原生比例放大，并提供触控方向键、动作键和快捷暂停。可随时返回完整机身视图，游戏持续运行。
+
+本地宝可梦卡带会根据文件头显示对应版本名称。选择卡带并开启电源，就能使用机身按键游玩。原生存档、即时存档以及存档导入导出连接起每次游戏；游戏、媒体和设置通过浏览器本地存储保存。
 
 PSP 页面提供 PPSSPP 连接入口，网页上的按键和摇杆可以控制本地模拟器。选择共享窗口后，模拟器画面会显示在掌机屏幕中。
 
@@ -77,3 +79,6 @@ Pocket Museum 同时提供七机整合页面与每款掌机的独立 HTML。下�
 ## 开源协议
 
 项目代码采用 [GPL-3.0-or-later](LICENSE)。第三方组件、字体、音效及演示游戏的来源和协议收录于 [NOTICE](public/licenses/NOTICE.md)。
+
+
+[Stage 9 使用体验与截图对比](docs/STAGE9_ACCEPTANCE.md)记录了桌面、手机、专注游玩与真实核心的验收结果。

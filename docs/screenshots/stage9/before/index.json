@@ -1,0 +1,38 @@
+{
+  "capturedAt": "2026-11-10T10:52:31.627Z",
+  "source": "http://127.0.0.1:5173",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "mobile": {
+    "width": 390,
+    "height": 844
+  },
+  "files": [
+    "docs/screenshots/stage9/before/museum-desktop.png",
+    "docs/screenshots/stage9/before/museum-mobile.png",
+    "docs/screenshots/stage9/before/gb.png",
+    "docs/screenshots/stage9/before/gb-mobile.png",
+    "docs/screenshots/stage9/before/gba.png",
+    "docs/screenshots/stage9/before/gba-mobile.png",
+    "docs/screenshots/stage9/before/sp.png",
+    "docs/screenshots/stage9/before/sp-mobile.png",
+    "docs/screenshots/stage9/before/ds.png",
+    "docs/screenshots/stage9/before/ds-mobile.png",
+    "docs/screenshots/stage9/before/3ds.png",
+    "docs/screenshots/stage9/before/3ds-system.png",
+    "docs/screenshots/stage9/before/3ds-mobile.png",
+    "docs/screenshots/stage9/before/psp.png",
+    "docs/screenshots/stage9/before/psp-system.png",
+    "docs/screenshots/stage9/before/psp-mobile.png",
+    "docs/screenshots/stage9/before/vita.png",
+    "docs/screenshots/stage9/before/vita-system.png",
+    "docs/screenshots/stage9/before/vita-mobile.png",
+    "docs/screenshots/stage9/before/gb-game.png",
+    "docs/screenshots/stage9/before/gba-game.png",
+    "docs/screenshots/stage9/before/sp-game.png",
+    "docs/screenshots/stage9/before/ds-game.png"
+  ],
+  "pageErrors": []
+}

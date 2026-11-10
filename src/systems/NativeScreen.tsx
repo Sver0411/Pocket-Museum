@@ -336,7 +336,7 @@ function SettingsPanel({
   const title = s.section || "System Settings";
   return (
     <div
-      className={`native-settings ${s.device}-settings ${isThreeRoot ? "three-settings-root" : ""} ${isThreeData ? "three-data-management" : ""} ${s.device === "3ds" && s.section === "Other Settings" ? "three-other-settings" : ""}`}
+      className={`native-settings ${s.device === "ds" && !s.section && !editor ? "ds-settings-root" : ""} ${s.device}-settings ${isThreeRoot ? "three-settings-root" : ""} ${isThreeData ? "three-data-management" : ""} ${s.device === "3ds" && s.section === "Other Settings" ? "three-other-settings" : ""}`}
     >
       <header>
         <Settings size={18} />
@@ -403,6 +403,17 @@ function SettingsPanel({
                   key={name}
                   onClick={() => dispatch({ type: "section", name })}
                 >
+                  {s.device === "ds" && !s.section && (
+                    <span className={`ds-setting-symbol symbol-${i}`}>
+                      {i === 0 ? (
+                        <Wrench size={22} />
+                      ) : i === 1 ? (
+                        <Clock size={22} />
+                      ) : (
+                        <Users size={22} />
+                      )}
+                    </span>
+                  )}
                   {isThreeRoot && (
                     <span className={`three-setting-art setting-${i}`}>
                       <ThreeApplet
@@ -424,7 +435,8 @@ function SettingsPanel({
                 dispatch({ type: "section", name: "Touch Screen" })
               }
             >
-              Touch Screen
+              <span className="ds-setting-symbol symbol-3">＋</span>
+              <span>Touch Screen</span>
             </button>
           )}
         </div>
@@ -553,6 +565,34 @@ function NativeDialog({
 function DsScreen({ state: s, dispatch, screen, onPowerOff, chat }: Props) {
   const time = useTime(s.prefs);
   const top = screen === 0;
+  const clock = (
+    <div className="ds-home-top">
+      <div className="ds-status">
+        <span>{s.prefs.nickname || "Player"}</span>
+        <span>
+          {displayedTime(time, s.prefs)}　{time.getMonth() + 1}/{time.getDate()}
+          　M ▰
+        </span>
+      </div>
+      <div className="ds-clock-calendar">
+        <AnalogClock date={time} />
+        <Calendar date={time} />
+      </div>
+      {s.app === "settings" && (
+        <div className="ds-settings-summary">
+          <Settings size={22} />
+          <div>
+            <b>{s.section || "Settings"}</b>
+            <p>
+              {s.editor
+                ? activeSettings(s).find((e) => e.key === s.editor)?.label
+                : "Change the system settings here. Select the setting you would like to change."}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
   if (s.phase === "health")
     return (
       <div className="ds-health">
@@ -579,11 +619,7 @@ function DsScreen({ state: s, dispatch, screen, onPowerOff, chat }: Props) {
       return <PictoChat s={s} dispatch={dispatch} top={top} chat={chat} />;
     if (s.app === "settings")
       return top ? (
-        <div className="ds-settings-top">
-          <Settings size={50} />
-          <h3>Settings</h3>
-          <p>{s.section || "Select a panel on the Touch Screen."}</p>
-        </div>
+        clock
       ) : (
         <SettingsPanel s={s} dispatch={dispatch} onPowerOff={onPowerOff} />
       );
@@ -607,22 +643,7 @@ function DsScreen({ state: s, dispatch, screen, onPowerOff, chat }: Props) {
         </div>
       );
   }
-  if (top)
-    return (
-      <div className="ds-home-top">
-        <div className="ds-status">
-          <span>{s.prefs.nickname || "Player"}</span>
-          <span>
-            {displayedTime(time, s.prefs)}　{time.getMonth() + 1}/
-            {time.getDate()}　M ▰
-          </span>
-        </div>
-        <div className="ds-clock-calendar">
-          <AnalogClock date={time} />
-          <Calendar date={time} />
-        </div>
-      </div>
-    );
+  if (top) return clock;
   const card = (
     app: string,
     i: number,
@@ -923,7 +944,12 @@ function ThreeScreen({
           };
         }}
         onPointerMove={(e) => {
-          if (e.buttons && swipeGrid.current && homeGrid.current) {
+          if (
+            !reorder.dragging &&
+            e.buttons &&
+            swipeGrid.current &&
+            homeGrid.current
+          ) {
             const scale =
               e.currentTarget.getBoundingClientRect().width /
               e.currentTarget.offsetWidth;
@@ -1108,13 +1134,7 @@ function PspScreen({
                   />
                 ) : (
                   <XmbIcon
-                    name={
-                      c.icon === "sound"
-                        ? "music"
-                        : c.icon === "camera"
-                          ? "folder"
-                          : c.icon
-                    }
+                    name={c.icon === "sound" ? "music" : c.icon}
                     size={i === s.category ? 44 : 36}
                   />
                 )}
@@ -1326,18 +1346,15 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
               : undefined
           }
         >
-          <button
+          <a
             className="vita-live-guide"
             aria-label="User's Guide"
-            onClick={() =>
-              dispatch({
-                type: "dialog",
-                text: "User's Guide\nThis browser reconstruction does not bundle the original system manual.",
-              })
-            }
+            href="https://manuals.playstation.net/document/en/psvita/"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <span>?</span>
-          </button>
+          </a>
           {app.id === "settings" && (
             <div className="vita-settings-guide">
               <span>?</span>
@@ -1355,7 +1372,7 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
             <span>
               <VitaGlyph name={app.id} size={108} />
             </span>
-            <b>Start</b>
+            <b>{s.started.includes(app.id) ? "Continue" : "Start"}</b>
           </button>
         </div>
         <button

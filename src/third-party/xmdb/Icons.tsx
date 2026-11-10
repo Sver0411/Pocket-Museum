@@ -1,6 +1,13 @@
 // From moeezalam/xmdb 0cf798b, MIT, Copyright 2026 Moeez Alam. See public/licenses/XMDB-MIT.txt.
 /** XMB category glyphs. Drawn rather than shipped so no Sony artwork is bundled. */
 const P: Record<string, string> = {
+  // Pocket Museum additions: category silhouettes drawn against the system guide.
+  gamepad:
+    "M7 7h10c3 0 4 4 4 9 0 2-2 3-3 1l-2-3H8l-2 3c-1 2-3 1-3-1 0-5 1-9 4-9zM7 9v4M5 11h4M16 10h.1M18 12h.1",
+  network:
+    "M12 2a10 10 0 100 20 10 10 0 000-20zM2 12h20M4 6h16M4 18h16M12 2c-6 5-6 15 0 20 6-5 6-15 0-20z",
+  camera: "M3 5h18v14H3zM5 16l4-5 4 3 3-5 5 7M7 8h.1",
+
   settings:
     "M12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM12 2l1.5 2.6 3-.4.6 3 2.6 1.5-1.4 2.7 1.4 2.7-2.6 1.5-.6 3-3-.4L12 22l-1.5-2.6-3 .4-.6-3L4.3 15.3l1.4-2.7-1.4-2.7 2.6-1.5.6-3 3 .4z",
   search:

@@ -1,3 +1,4 @@
+import { cartridgeTitle } from "../emulator/cartridge";
 import type { Core, GameSystem } from "../emulator/systems";
 export interface Game {
   id: string;
@@ -147,7 +148,7 @@ export async function importRom(
   }
   return {
     id: await identify(bytes),
-    name: file.name.replace(/\.(gb|gbc|gba|nds)$/i, ""),
+    name: cartridgeTitle(bytes, system) || file.name.replace(/\.(gb|gbc|gba|nds)$/i, ""),
     bytes,
     system,
     importedAt: Date.now(),

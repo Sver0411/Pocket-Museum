@@ -1,3 +1,4 @@
+import { focusDevice } from "./focusDevice";
 import { DsGameScreen } from "./DsGameScreen";
 import { useEffect, useRef, useState } from "react";
 import { projectiveMatrix, scaledQuad } from "./projection";
@@ -17,6 +18,7 @@ import type { InputController } from "../input/InputController";
 import type { DeviceDefinition, Rect } from "../devices";
 export type Status = "off" | "loading" | "running" | "paused" | "error";
 interface Props {
+  focus?: boolean;
   emulate?: boolean;
   nativeScreen?: (index: number) => ReactNode;
   cancelToken?: string;
@@ -44,6 +46,7 @@ interface Props {
 }
 export function Console({
   device: sourceDevice,
+  focus = false,
   status,
   pressed,
   input,
@@ -69,7 +72,8 @@ export function Console({
   cancelToken = "",
 }: Props) {
   // Flat play has its own photograph and coordinates; the original perspective is never warped.
-  const d = presentationDevice(sourceDevice, flat);
+  const shell = presentationDevice(sourceDevice, flat || focus);
+  const d = focus ? focusDevice(shell) : shell;
   const stage = useRef<HTMLDivElement>(null);
   const dsFrame = useRef<HTMLIFrameElement>(null);
   const [stageWidth, setStageWidth] = useState(d.width);
@@ -81,7 +85,7 @@ export function Console({
     observer.observe(stage.current);
     return () => observer.disconnect();
   }, []);
-  const isFlat = flat && !closed;
+  const isFlat = (flat || focus) && !closed;
   const view = d.viewport ?? { x: 0, y: 0, w: d.width, h: d.height };
   const photoScale = stageWidth / view.w;
   const [drag, setDrag] = useState<number | null>(null),
@@ -211,8 +215,9 @@ export function Console({
   return (
     <div
       ref={stage}
-      className={`console-space ${isFlat ? "fully-open" : ""} ${drag !== null ? "lid-dragging" : ""} ${closed ? "closed" : ""} ${d.landscape ? "landscape" : "portrait"}`}
+      className={`console-space ${focus ? "focus-console" : ""} ${isFlat ? "fully-open" : ""} ${drag !== null ? "lid-dragging" : ""} ${closed ? "closed" : ""} ${d.landscape ? "landscape" : "portrait"}`}
       data-device={d.id}
+      data-focus={focus || undefined}
       data-posture={closed ? "closed" : isFlat ? "flat" : "angled"}
       data-art-view={d.view ?? "angled"}
       data-folding={moving || drag !== null || undefined}
@@ -383,7 +388,7 @@ export function Console({
           {d.screens.filter((r) => !r.lid).map((r, i) => screen(r, i))}
           <div
             className="face-controls"
-            inert={closed || moving || drag !== null}
+            inert={focus || closed || moving || drag !== null}
           >
             {hasLinkedDPad(d) && (
               <DPad device={d} pressed={pressed} input={input} />

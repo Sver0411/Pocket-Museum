@@ -576,6 +576,7 @@ export interface NativeState {
   dialog: string;
   prefs: Record<string, string>;
   open: string[];
+  started: string[];
   room: string;
   editor: string;
   draft: string;
@@ -623,6 +624,7 @@ export function initialSystem(
     dialog: "",
     prefs,
     open: [],
+    started: [],
     room: "",
     editor: "",
     draft: "",
@@ -840,7 +842,13 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
       };
     case "start":
       return s.device === "vita"
-        ? { ...s, phase: "app", section: "", selection: 0 }
+        ? {
+            ...s,
+            phase: "app",
+            section: "",
+            selection: 0,
+            started: [...new Set([...s.started, s.app])],
+          }
         : s;
     case "close":
       return {
@@ -848,6 +856,7 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
         suspended: "",
         pending: "",
         open: s.open.filter((x) => x !== a.app),
+        started: s.started.filter((x) => x !== a.app),
         phase: "home",
         app: "",
       };
@@ -994,7 +1003,8 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
         return s;
       }
       if (b === "B") return systemBack(s);
-      if (s.phase === "live") return b === "A" ? { ...s, phase: "app" } : s;
+      if (s.phase === "live")
+        return b === "A" ? systemReducer(s, { type: "start" }) : s;
       if (s.phase === "index")
         return b === "A" && s.open.length
           ? { ...s, phase: "live", app: s.open[s.selection % s.open.length] }

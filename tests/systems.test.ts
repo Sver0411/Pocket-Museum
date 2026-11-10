@@ -65,7 +65,9 @@ describe("native handheld startup and navigation", () => {
     expect(s.phase).toBe("home");
     s = reduce(s, { type: "open", app: "settings" });
     expect(s.phase).toBe("live");
+    expect(s.started).not.toContain("settings");
     s = button(s, "A");
+    expect(s.started).toContain("settings");
     expect(s.phase).toBe("app");
     s = reduce(s, { type: "home" });
     expect(s.phase).toBe("live");

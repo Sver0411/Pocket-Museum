@@ -1,3 +1,4 @@
+import { FocusControls } from "./components/FocusControls";
 import { PpssppClient } from "./emulator/PpssppClient";
 import {
   DevicePresentation,
@@ -32,6 +33,7 @@ import {
   Gamepad2,
   Layers,
   Maximize2,
+  Minimize2,
   Pause,
   Play,
   Plus,
@@ -111,6 +113,7 @@ export default function App() {
     !(STANDALONE && !COLLECTION) && !routeDevice(),
   );
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [focusPlay, setFocusPlay] = useState(false);
   const [connectionOpen, setConnectionOpen] = useState(false),
     [externalVersion, setExternalVersion] = useState(""),
     [externalEndpoint, setExternalEndpoint] = useState(
@@ -221,7 +224,7 @@ export default function App() {
   const notify = useCallback((message: string) => {
     setToast(message);
     clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(""), 3500);
+    toastTimer.current = setTimeout(() => setToast(""), 2200);
   }, []);
   const report = useCallback((e: unknown) => {
     if (mounted.current) setError(e instanceof Error ? e.message : String(e));
@@ -280,22 +283,15 @@ export default function App() {
           setHydrated(true);
           return;
         }
-        const demos: Game[] = await Promise.all(
-          DEMOS.map(async (d) => {
-            const response = await fetch(d.url);
-            if (!response.ok) throw new Error("演示游戏加载失败");
-            const bytes = new Uint8Array(await response.arrayBuffer());
-            return {
-              id: await identify(bytes),
-              name: d.name,
-              system: d.system,
-              license: d.license,
-              bytes,
-              demo: true,
-              importedAt: 0,
-            };
-          }),
-        );
+        const demos: Game[] = DEMOS.map((d) => ({
+          id: d.id,
+          name: d.name,
+          system: d.system,
+          license: d.license,
+          bytes: new Uint8Array(),
+          demo: true,
+          importedAt: 0,
+        }));
         const [imported, selected, config, profiles, gbSelected, ndsSelected] =
           await Promise.all([
             storage.games(),
@@ -534,7 +530,9 @@ export default function App() {
   }, [input, persistNative, report]);
   useEffect(() => {
     if (!["running", "paused"].includes(status)) return;
-    const timer = setInterval(() => void persistNative().catch(report), 5000);
+    const timer = setInterval(() => {
+      if (!operation.current) void persistNative().catch(report);
+    }, 5000);
     return () => clearInterval(timer);
   }, [status, persistNative, report]);
   const stop = async () => {
@@ -575,35 +573,31 @@ export default function App() {
   useEffect(() => {
     if (native.state.shutdown) void guarded(stop);
   }, [native.state.shutdown]);
+  const startPower = () => {
+    if (!DEVICE_ADAPTERS[deviceRef.current] || STANDALONE || !gameRef.current) {
+      setClosed(false);
+      setStatus("running");
+      statusRef.current = "running";
+      return;
+    }
+    bridge.current?.dispose();
+    bridge.current = null;
+    booting.current = undefined;
+    setClosed(false);
+    setSession(crypto.randomUUID());
+    setStatus("loading");
+    statusRef.current = "loading";
+  };
   const power = () =>
     void guarded(async () => {
       if (statusRef.current !== "off" && statusRef.current !== "error") {
         await stop();
-        notify(
-          bridge.current && !!DEVICE_ADAPTERS[deviceRef.current] && !STANDALONE
-            ? "已保存原生存档 · 电源关闭"
-            : "电源关闭",
-        );
+        notify("电源关闭");
         return;
       }
-      if (
-        !DEVICE_ADAPTERS[deviceRef.current] ||
-        STANDALONE ||
-        !gameRef.current
-      ) {
-        setClosed(false);
-        setStatus("running");
-        statusRef.current = "running";
-        return;
-      }
-      bridge.current?.dispose();
-      bridge.current = null;
-      booting.current = undefined;
-      setClosed(false);
-      setSession(crypto.randomUUID());
-      setStatus("loading");
-      statusRef.current = "loading";
+      startPower();
     });
+  const demoBytes = useRef(new Map<string, Uint8Array>());
   const onFrame = async (frame: HTMLIFrameElement) => {
     if (statusRef.current !== "loading" || booting.current === session) return;
     booting.current = session;
@@ -613,18 +607,29 @@ export default function App() {
     if (!selected) return;
     try {
       const native = await storage.getSave(selected.id, "native");
-      await b.start(
-        selected.bytes,
-        selected.id,
-        native?.data,
-        gameSystem(selected),
-      );
+      let bytes = selected.bytes;
+      if (selected.demo && !bytes.length) {
+        const cached = demoBytes.current.get(selected.id);
+        if (cached) bytes = cached;
+        else {
+          const demo = DEMOS.find((d) => d.id === selected.id);
+          if (!demo) throw new Error("找不到卡带资源");
+          const response = await fetch(demo.url);
+          if (!response.ok) throw new Error("卡带读取失败，请重试");
+          bytes = new Uint8Array(await response.arrayBuffer());
+          if ((await identify(bytes)) !== selected.id)
+            throw new Error("卡带校验失败");
+          demoBytes.current.set(selected.id, bytes);
+        }
+      }
+      if (bridge.current !== b) return;
+      await b.start(bytes, selected.id, native?.data, gameSystem(selected));
       if (bridge.current !== b) return;
       const s = soundRef.current;
       await b.volume(s.muted ? 0 : s.volume / 100);
       if (closedRef.current) await b.pause(true);
       setStatus(closedRef.current ? "paused" : "running");
-      notify(native ? "原生存档已恢复" : "游戏已就绪 · 按 A / Start 开始");
+      notify(native ? "原生存档已恢复" : "游戏已启动");
     } catch (e) {
       if (bridge.current === b) {
         setStatus("error");
@@ -634,15 +639,27 @@ export default function App() {
       }
     }
   };
-  const selectGame = (next: Game) =>
+  const selectGame = (next: Game, play = false) =>
     void guarded(async () => {
-      if (next.id === game?.id) return;
-      await stop();
-      setGame(next);
-      setHasState(false);
-      selectedGames.current[selectionKey(deviceId)] = next.id;
-      await storage.putSetting(settingKey(deviceId), next.id);
-      notify(`已插入 ${next.name}`);
+      if (next.id === gameRef.current?.id && bridge.current && ready) {
+        if (play && statusRef.current === "paused") {
+          await bridge.current.pause(false);
+          setStatus("running");
+        }
+        setLibraryOpen(false);
+        return;
+      }
+      if (next.id !== gameRef.current?.id || play) {
+        await stop();
+        gameRef.current = next;
+        setGame(next);
+        setHasState(false);
+        selectedGames.current[selectionKey(deviceId)] = next.id;
+        await storage.putSetting(settingKey(deviceId), next.id);
+      }
+      setLibraryOpen(false);
+      if (play) startPower();
+      else notify(`已插入 ${next.name}`);
     });
   const importFile = (file?: File) => {
     if (file)
@@ -660,7 +677,7 @@ export default function App() {
         setGame(imported);
         selectedGames.current[selectionKey(deviceId)] = imported.id;
         await storage.putSetting(settingKey(deviceId), imported.id);
-        notify("游戏已导入 · 文件仅保存在本机");
+        notify(`已导入 ${imported.name} · 点游玩开始`);
       });
   };
   const pause = () =>
@@ -689,6 +706,7 @@ export default function App() {
   const fold = () =>
     void guarded(async () => {
       const next = !closedRef.current;
+      setFocusPlay(false);
       input.releaseAll();
       if (device.sleepOnClose) {
         if (next) {
@@ -744,6 +762,7 @@ export default function App() {
       setDeviceId(id);
       setInMuseum(false);
       setToolsOpen(false);
+      setFocusPlay(false);
       if (!(STANDALONE && !COLLECTION))
         history[inMuseum ? "pushState" : "replaceState"](
           {},
@@ -757,6 +776,7 @@ export default function App() {
       await stop();
       setInMuseum(true);
       setToolsOpen(false);
+      setFocusPlay(false);
       history.pushState({}, "", location.pathname + location.search);
     });
   const routeRef = useRef(() => {});
@@ -767,6 +787,7 @@ export default function App() {
       setClosed(false);
       setFlat(false);
       setToolsOpen(false);
+      setFocusPlay(false);
       setInMuseum(!id);
       if (id) {
         applyDisplay(id);
@@ -858,13 +879,34 @@ export default function App() {
       report(e);
     }
   };
+  useEffect(() => {
+    const shortcut = (e: KeyboardEvent) => {
+      if (
+        inMuseum ||
+        help ||
+        libraryOpen ||
+        connectionOpen ||
+        e.repeat ||
+        (e.target instanceof HTMLElement &&
+          e.target.closest("input,textarea,select,[contenteditable=true]"))
+      )
+        return;
+      if (e.code === "Escape" && focusPlay) {
+        e.preventDefault();
+        input.releaseAll();
+        setFocusPlay(false);
+      }
+    };
+    window.addEventListener("keydown", shortcut);
+    return () => window.removeEventListener("keydown", shortcut);
+  }, [inMuseum, help, libraryOpen, connectionOpen, focusPlay, input]);
   const adapter = DEVICE_ADAPTERS[deviceId];
   if (inMuseum) return <MuseumHome onSelect={switchDevice} />;
   const ready = ["running", "paused"].includes(status),
     powered = status !== "off" && status !== "error";
   return (
     <div
-      className={`app studio-app play-view ${toolsOpen ? "tools-open" : ""} ${ready && !!bridge.current ? "game-active" : ""}`}
+      className={`app studio-app play-view ${toolsOpen ? "tools-open" : ""} ${ready && !!bridge.current ? "game-active" : ""} ${focusPlay ? "focus-play" : ""}`}
       data-theme={deviceId}
     >
       <ThemeBackdrop device={deviceId} />
@@ -976,107 +1018,124 @@ export default function App() {
         device={deviceId}
         keyboard={<KeyboardLegend device={device} pads={pads} />}
         handheld={
-          <Console
-            key={deviceId}
-            cancelToken={`${help}:${libraryOpen}:${flat}`}
-            device={device}
-            emulate={!STANDALONE && !!game && acceptsGame(deviceId, game)}
-            onTouch={onTouch}
-            nativeScreen={(index) =>
-              externalVersion ? (
-                <ExternalScreen
-                  stream={externalStream}
-                  still={externalStill}
-                  crop={captureCrop}
-                  onError={report}
-                />
-              ) : (
-                <NativeScreen
-                  state={native.state}
-                  chat={native.chat}
-                  volume={muted ? 0 : volume / 100}
-                  headphones={headphones}
-                  dispatch={native.dispatch}
-                  screen={index}
-                  onPowerOff={() => void guarded(stop)}
-                />
-              )
-            }
-            status={status}
-            pressed={pressed}
-            input={input}
-            closed={closed}
-            flat={flat}
-            light={light}
-            onLight={() => setLight(!light)}
-            onPower={power}
-            powerDisabled={busy || !hydrated || status === "loading"}
-            onFold={fold}
-            foldDisabled={busy}
-            onLidMotion={() => input.releaseAll()}
-            onMenu={() => {
-              if (external.current) {
-                notify("外部模拟器的 HOME/暂停菜单请在模拟器窗口操作");
-                return;
-              }
-              if (statusRef.current === "running")
-                native.dispatch({ type: "home" });
-            }}
-            onVolume={(delta) => {
-              if (external.current) {
-                notify("连接模式音量由 PPSSPP 控制");
-                return;
-              }
-              const next = Math.min(
-                100,
-                Math.max(0, (muted ? 0 : volume) + delta),
-              );
-              setVolume(next);
-              setMuted(next === 0);
-            }}
-            hardwareValues={{ ...hardwareValues, volume: muted ? 0 : volume }}
-            onHardwareValue={(id, value) => {
-              if (id === "volume") {
-                setVolume(value);
-                setMuted(value === 0);
-              } else {
-                setHardwareValues((v) => ({ ...v, [id]: value }));
-                if (id === "depth")
-                  notify("浏览器采用平面显示，当前不提供裸眼立体效果");
-              }
-            }}
-            onSound={(long) => {
-              if (external.current) {
-                notify("连接模式 SOUND 由 PPSSPP 控制");
-                return;
-              }
-              if (long) setMuted((v) => !v);
-              else if (
-                headphones &&
-                native.state.phase === "app" &&
-                native.state.category === 2 &&
-                native.state.app.includes("Memory Stick")
-              ) {
-                const current = native.state.prefs["sound-preset"] ?? "OFF",
-                  next =
-                    SOUND_PRESETS[
-                      (SOUND_PRESETS.indexOf(
-                        current as (typeof SOUND_PRESETS)[number],
-                      ) +
-                        1) %
-                        SOUND_PRESETS.length
-                    ];
-                native.dispatch({
-                  type: "set",
-                  key: "sound-preset",
-                  value: next,
-                });
-                notify(`音色 ${next}`);
-              } else notify("音色切换仅适用于耳机模式下的音乐播放");
-            }}
-            session={session}
-            onFrame={(frame) => void onFrame(frame)}
-          />
+          <>
+            <div className="console-stage">
+              <Console
+                key={deviceId}
+                cancelToken={`${help}:${libraryOpen}:${flat}`}
+                device={device}
+                focus={focusPlay}
+                emulate={!STANDALONE && !!game && acceptsGame(deviceId, game)}
+                onTouch={onTouch}
+                nativeScreen={(index) =>
+                  externalVersion ? (
+                    <ExternalScreen
+                      stream={externalStream}
+                      still={externalStill}
+                      crop={captureCrop}
+                      onError={report}
+                    />
+                  ) : (
+                    <NativeScreen
+                      state={native.state}
+                      chat={native.chat}
+                      volume={muted ? 0 : volume / 100}
+                      headphones={headphones}
+                      dispatch={native.dispatch}
+                      screen={index}
+                      onPowerOff={() => void guarded(stop)}
+                    />
+                  )
+                }
+                status={status}
+                pressed={pressed}
+                input={input}
+                closed={closed}
+                flat={flat}
+                light={light}
+                onLight={() => setLight(!light)}
+                onPower={power}
+                powerDisabled={busy || !hydrated || status === "loading"}
+                onFold={fold}
+                foldDisabled={busy}
+                onLidMotion={() => input.releaseAll()}
+                onMenu={() => {
+                  if (external.current) {
+                    notify("外部模拟器的 HOME/暂停菜单请在模拟器窗口操作");
+                    return;
+                  }
+                  if (statusRef.current === "running")
+                    native.dispatch({ type: "home" });
+                }}
+                onVolume={(delta) => {
+                  if (external.current) {
+                    notify("连接模式音量由 PPSSPP 控制");
+                    return;
+                  }
+                  const next = Math.min(
+                    100,
+                    Math.max(0, (muted ? 0 : volume) + delta),
+                  );
+                  setVolume(next);
+                  setMuted(next === 0);
+                }}
+                hardwareValues={{
+                  ...hardwareValues,
+                  volume: muted ? 0 : volume,
+                }}
+                onHardwareValue={(id, value) => {
+                  if (id === "volume") {
+                    setVolume(value);
+                    setMuted(value === 0);
+                  } else {
+                    setHardwareValues((v) => ({ ...v, [id]: value }));
+                    if (id === "depth")
+                      notify("浏览器采用平面显示，当前不提供裸眼立体效果");
+                  }
+                }}
+                onSound={(long) => {
+                  if (external.current) {
+                    notify("连接模式 SOUND 由 PPSSPP 控制");
+                    return;
+                  }
+                  if (long) setMuted((v) => !v);
+                  else if (
+                    headphones &&
+                    native.state.phase === "app" &&
+                    native.state.category === 2 &&
+                    native.state.app.includes("Memory Stick")
+                  ) {
+                    const current = native.state.prefs["sound-preset"] ?? "OFF",
+                      next =
+                        SOUND_PRESETS[
+                          (SOUND_PRESETS.indexOf(
+                            current as (typeof SOUND_PRESETS)[number],
+                          ) +
+                            1) %
+                            SOUND_PRESETS.length
+                        ];
+                    native.dispatch({
+                      type: "set",
+                      key: "sound-preset",
+                      value: next,
+                    });
+                    notify(`音色 ${next}`);
+                  } else notify("音色切换仅适用于耳机模式下的音乐播放");
+                }}
+                session={session}
+                onFrame={(frame) => void onFrame(frame)}
+              />
+            </div>
+            {focusPlay && (
+              <FocusControls
+                device={device}
+                input={input}
+                pressed={pressed}
+                enabled={status === "running" && !closed}
+                onHome={() => native.dispatch({ type: "home" })}
+              />
+            )}
+          </>
         }
         controls={
           <>
@@ -1162,6 +1221,7 @@ export default function App() {
                 disabled={busy || closed}
                 onClick={() => {
                   input.releaseAll();
+                  setFocusPlay(false);
                   setFlat((v) => !v);
                 }}
               >
@@ -1372,6 +1432,33 @@ export default function App() {
             <span>{game ? "更换卡带" : "选择卡带"}</span>
           </button>
         )}
+        {["gb", "sp"].includes(deviceId) && (
+          <button
+            className="dock-focus"
+            aria-label={focusPlay ? "退出专注模式" : "专注游玩"}
+            aria-pressed={focusPlay}
+            disabled={busy || closed}
+            onClick={() => {
+              input.releaseAll();
+              setFocusPlay((v) => !v);
+              setToolsOpen(false);
+            }}
+          >
+            {focusPlay ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            <span>{focusPlay ? "外观" : "专注"}</span>
+          </button>
+        )}
+        {ready && (
+          <button
+            className="dock-pause"
+            aria-label={status === "paused" ? "快捷继续" : "快捷暂停"}
+            disabled={busy || closed}
+            onClick={pause}
+          >
+            {status === "paused" ? <Play size={18} /> : <Pause size={18} />}
+            <span>{status === "paused" ? "继续" : "暂停"}</span>
+          </button>
+        )}
         <button
           className="mobile-tools-button"
           aria-label="操作与设置"
@@ -1559,43 +1646,45 @@ export default function App() {
               导入本地 {adapter?.extensions.replaceAll(",", " / ")}{" "}
               文件，或使用开源演示卡带。
             </p>
-            {deviceId === "gb" && (
-              <p>
-                GBC 使用兼容模式运行，机身仍为 DMG-01；GB Snake 先按两次 Start
-                开始。
-              </p>
-            )}
+
             <div className="game-list">
               {games
                 .filter((g) => acceptsGame(deviceId, g))
                 .map((g) => (
-                  <button
+                  <div
                     key={g.id}
-                    onClick={() => {
-                      selectGame(g);
-                      setLibraryOpen(false);
-                    }}
-                    disabled={busy || status === "loading"}
-                    className={`game-card ${game?.id === g.id ? "selected" : ""}`}
-                    aria-pressed={game?.id === g.id}
+                    className={`game-card-row ${game?.id === g.id ? "selected" : ""}`}
                   >
-                    <span className="cartridge-art">
-                      <Gamepad2 size={28} />
-                    </span>
-                    <span>
-                      <h3>{g.name}</h3>
-                      <small>
-                        {g.demo
-                          ? `开源演示 · ${g.license ?? "CC0"}`
-                          : `本地卡带 · ${gameSystem(g).toUpperCase()}`}
-                      </small>
-                    </span>
-                    {game?.id === g.id ? (
-                      <Check size={17} />
-                    ) : (
-                      <ChevronRight size={16} />
-                    )}
-                  </button>
+                    <button
+                      onClick={() => selectGame(g)}
+                      disabled={busy || status === "loading"}
+                      className={`game-card ${game?.id === g.id ? "selected" : ""}`}
+                      aria-pressed={game?.id === g.id}
+                      aria-label={g.name}
+                    >
+                      <span className="cartridge-art">
+                        <Gamepad2 size={28} />
+                      </span>
+                      <span>
+                        <h3 id={`game-${g.id}`}>{g.name}</h3>
+                        <small>
+                          {DEMOS.find((d) => d.id === g.id)?.description ||
+                            `本地卡带 · ${gameSystem(g).toUpperCase()}`}
+                        </small>
+                      </span>
+                      {game?.id === g.id && <Check size={17} />}
+                    </button>
+                    <button
+                      className="game-quick-play"
+                      aria-label="立即游玩"
+                      aria-describedby={`game-${g.id}`}
+                      disabled={busy || status === "loading"}
+                      onClick={() => selectGame(g, true)}
+                    >
+                      <Play size={17} />
+                      <span>游玩</span>
+                    </button>
+                  </div>
                 ))}
             </div>
             <label
@@ -1639,7 +1728,11 @@ export default function App() {
                 <ArrowUpFromLine size={14} />
                 导出 .{adapter?.core === "desmume" ? "dsv" : "sav"}
               </button>
-              <label className={!ready || busy ? "disabled" : ""}>
+              <label
+                className={
+                  !game || busy || status === "loading" ? "disabled" : ""
+                }
+              >
                 <FolderOpen size={14} />
                 导入 .{adapter?.core === "desmume" ? "dsv" : "sav"}
                 <input
@@ -1647,8 +1740,8 @@ export default function App() {
                   type="file"
                   accept={adapter?.core === "desmume" ? ".dsv" : ".sav,.srm"}
                   disabled={
-                    !ready ||
-                    !bridge.current ||
+                    !game ||
+                    status === "loading" ||
                     busy ||
                     !DEVICE_ADAPTERS[deviceId] ||
                     STANDALONE
@@ -1660,14 +1753,22 @@ export default function App() {
                         if (file.size === 0 || file.size > 16 * 1024 * 1024)
                           throw new Error("存档大小无效");
                         const data = new Uint8Array(await file.arrayBuffer());
-                        await bridge.current?.loadNative(data);
+                        const wasRunning = ready;
+                        // Finish the old core before replacing its persistent image.
+                        // A later SRAM flush must never overwrite the imported save.
+                        await stop();
                         await storage.putSave(
                           game!.id,
                           "native",
                           data,
                           coreFor(gameSystem(game!)),
                         );
-                        notify("原生存档已导入，重新开机后读取");
+                        if (wasRunning) startPower();
+                        notify(
+                          wasRunning
+                            ? "原生存档已导入 · 正在重新启动"
+                            : "原生存档已导入 · 开机后读取",
+                        );
                       });
                     e.target.value = "";
                   }}

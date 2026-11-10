@@ -174,6 +174,11 @@
       "sha256": "c5d1023c05eeb22cc87fe645d7f88e393004587fcc5d490b120a31bae413d276"
     },
     {
+      "path": "licenses/BlocksDS-Maxmod-ISC.txt",
+      "bytes": 1953,
+      "sha256": "21afef4375bfc4196ba96200837e60bf99b32afc0e89bae1210e5987b8bdd28a"
+    },
+    {
       "path": "licenses/BlocksDS-libnds-LICENSE",
       "bytes": 1325,
       "sha256": "55f0918e6e76092838c08a37da957a4ad760f814573b4c73235c994002087f79"
@@ -182,11 +187,6 @@
       "path": "licenses/BlocksDS-libnds-LICENSE.FatFs",
       "bytes": 1913,
       "sha256": "b896e32fb2cdb3fc8b3b6fd854706fca4ac55619fbb6d5eb2429cb05ee338966"
-    },
-    {
-      "path": "licenses/BlocksDS-Maxmod-ISC.txt",
-      "bytes": 1953,
-      "sha256": "21afef4375bfc4196ba96200837e60bf99b32afc0e89bae1210e5987b8bdd28a"
     },
     {
       "path": "licenses/BlocksDS-picolibc-COPYING.txt",
@@ -202,11 +202,6 @@
       "path": "licenses/DeSmuME-GPL-2.0.txt",
       "bytes": 18092,
       "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
-    },
-    {
-      "path": "licenses/devkitARM-MPL-2.0.txt",
-      "bytes": 16726,
-      "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
     },
     {
       "path": "licenses/EmulatorJS-GPL-3.0.txt",
@@ -259,11 +254,6 @@
       "sha256": "4f88ab3c885c87874834441a0d009cea8942f57461d7b870be65cf4e31362073"
     },
     {
-      "path": "licenses/libtonc-MIT.txt",
-      "bytes": 1051,
-      "sha256": "225e35cf24750edda27c5dcbb06db4d8aa119c99e1972e5c3a51b128c3515fcf"
-    },
-    {
       "path": "licenses/Lucide-ISC.txt",
       "bytes": 880,
       "sha256": "1e7290b35280a048667bbf0ebabac1c7fd52a75300e8b2946ac165715997f2bc"
@@ -279,19 +269,44 @@
       "sha256": "d2ff34746bb571ce7a4fd8a29447d30b48281429fc31226bacd824861b8fb292"
     },
     {
-      "path": "licenses/mGBA-MPL-2.0.txt",
-      "bytes": 16726,
-      "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
-    },
-    {
       "path": "licenses/NOTICE.md",
-      "bytes": 10863,
-      "sha256": "52d1e0eec7733e7e7cbb1ed9e6c9961fb439805dad6be5c7b8ec79b44336326b"
+      "bytes": 11927,
+      "sha256": "0f0aeb428efc608b805b4709578dbc3369b736212902ae7c167f2a176315a3d8"
     },
     {
       "path": "licenses/React-MIT.txt",
       "bytes": 1088,
       "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+    },
+    {
+      "path": "licenses/Tobu-Tobu-Girl-DX-MIT.txt",
+      "bytes": 1070,
+      "sha256": "f5529c9982c7a8f966679d5772037c5ef0b25b00ba4daaff5a2ee35e891d8dda"
+    },
+    {
+      "path": "licenses/Vita3K-GPL-2.0.txt",
+      "bytes": 18092,
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "licenses/XMDB-MIT.txt",
+      "bytes": 1056,
+      "sha256": "cae7a9beaccbe3fbd726a7b269c737c4b5ea2de7c85948631846d0101d779f2a"
+    },
+    {
+      "path": "licenses/devkitARM-MPL-2.0.txt",
+      "bytes": 16726,
+      "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+    },
+    {
+      "path": "licenses/libtonc-MIT.txt",
+      "bytes": 1051,
+      "sha256": "225e35cf24750edda27c5dcbb06db4d8aa119c99e1972e5c3a51b128c3515fcf"
+    },
+    {
+      "path": "licenses/mGBA-MPL-2.0.txt",
+      "bytes": 16726,
+      "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
     },
     {
       "path": "licenses/source/2048-GBA-ae36800.tar.gz",
@@ -302,11 +317,6 @@
       "path": "licenses/source/DeSmuME-c6317a4.tar.gz",
       "bytes": 11408505,
       "sha256": "4e94bb7f31c35a51bb03076fd4d087c1dc011f15d734a99650f315aa567d95ba"
-    },
-    {
-      "path": "licenses/source/devkitarm-crtls-1c0c102.tar.gz",
-      "bytes": 17461,
-      "sha256": "5729f1421496a37c4a26bee2f0484284c95569c56e082230839ef47a55104e1d"
     },
     {
       "path": "licenses/source/EmulatorJS-local-version.patch",
@@ -329,19 +339,19 @@
       "sha256": "156d46b4578133688aa4804b77f2b2b274d30adb508fcd2a5c711c10128b1000"
     },
     {
+      "path": "licenses/source/Tobu-Tobu-Girl-DX-4985d4d.tar.gz",
+      "bytes": 310614,
+      "sha256": "14cf034383aff32beb2f0278f0cda07d2e0d1ef148a89b95f8cb1c2ddb291d3b"
+    },
+    {
+      "path": "licenses/source/devkitarm-crtls-1c0c102.tar.gz",
+      "bytes": 17461,
+      "sha256": "5729f1421496a37c4a26bee2f0484284c95569c56e082230839ef47a55104e1d"
+    },
+    {
       "path": "licenses/source/mGBA-57678d6.tar.gz",
       "bytes": 15320050,
       "sha256": "94277315d6f4d15816b5d13fb0c77adfc03690a5a4eb789bd18c214978d20ac1"
-    },
-    {
-      "path": "licenses/Vita3K-GPL-2.0.txt",
-      "bytes": 18092,
-      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
-    },
-    {
-      "path": "licenses/XMDB-MIT.txt",
-      "bytes": 1056,
-      "sha256": "cae7a9beaccbe3fbd726a7b269c737c4b5ea2de7c85948631846d0101d779f2a"
     },
     {
       "path": "roms/2048.gba",
@@ -357,6 +367,16 @@
       "path": "roms/snake.gb",
       "bytes": 32768,
       "sha256": "94f66ec5063b33bea89ed80ed05334e1655bcc71114d2c9a33a953aa368bb049"
+    },
+    {
+      "path": "roms/tobudx.gb",
+      "bytes": 262144,
+      "sha256": "0a0e8018dbbc8d7f8cd99f05e7cdc7b4cc9e358ecfe9377ebfb2291a84c6e310"
+    },
+    {
+      "path": "vendor/emulatorjs/4.2.3/data/compression/README.md",
+      "bytes": 189,
+      "sha256": "c01bf373463b6eac94ce2db8f6102010c104683bd70203e9b1343865693d1db5"
     },
     {
       "path": "vendor/emulatorjs/4.2.3/data/compression/extract7z.js",
@@ -377,11 +397,6 @@
       "path": "vendor/emulatorjs/4.2.3/data/compression/libunrar.wasm",
       "bytes": 173799,
       "sha256": "e4ea9bd0b13a9767916b424469e30205f47f267ecd9125ed56fb9ff0b9bc1b58"
-    },
-    {
-      "path": "vendor/emulatorjs/4.2.3/data/compression/README.md",
-      "bytes": 189,
-      "sha256": "c01bf373463b6eac94ce2db8f6102010c104683bd70203e9b1343865693d1db5"
     },
     {
       "path": "vendor/emulatorjs/4.2.3/data/cores/desmume-wasm.data",

@@ -1,0 +1,138 @@
+[
+  {
+    "device": "gb",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "before": {
+      "w": 261.078125,
+      "h": 230.9375
+    },
+    "after": {
+      "w": 748.875,
+      "h": 673.984375
+    },
+    "screenWidthGain": 2.8683942785325276,
+    "path": "docs/screenshots/stage9/after/gb-focus-1440x1000.png"
+  },
+  {
+    "device": "sp",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "before": {
+      "w": 356.7777099609375,
+      "h": 237.84658813476562
+    },
+    "after": {
+      "w": 1011,
+      "h": 674
+    },
+    "screenWidthGain": 2.833697206338062,
+    "path": "docs/screenshots/stage9/after/sp-focus-1440x1000.png"
+  },
+  {
+    "device": "gb",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "before": {
+      "w": 190.96875,
+      "h": 168.90625
+    },
+    "after": {
+      "w": 362,
+      "h": 325.796875
+    },
+    "screenWidthGain": 1.8955981017836687,
+    "path": "docs/screenshots/stage9/after/gb-focus-390x844.png"
+  },
+  {
+    "device": "sp",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "before": {
+      "w": 226.9990997314453,
+      "h": 151.33273315429688
+    },
+    "after": {
+      "w": 362,
+      "h": 241.328125
+    },
+    "screenWidthGain": 1.5947199809526538,
+    "path": "docs/screenshots/stage9/after/sp-focus-390x844.png"
+  },
+  {
+    "device": "gb",
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "before": {
+      "w": 119.96875,
+      "h": 106.109375
+    },
+    "after": {
+      "w": 292,
+      "h": 262.796875
+    },
+    "screenWidthGain": 2.433967178952852,
+    "path": "docs/screenshots/stage9/after/gb-focus-320x568.png"
+  },
+  {
+    "device": "sp",
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "before": {
+      "w": 163.94903564453125,
+      "h": 109.28890228271484
+    },
+    "after": {
+      "w": 292,
+      "h": 194.65625
+    },
+    "screenWidthGain": 1.781041278175643,
+    "path": "docs/screenshots/stage9/after/sp-focus-320x568.png"
+  },
+  {
+    "device": "gb",
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "before": {
+      "w": 81.265625,
+      "h": 71.875
+    },
+    "after": {
+      "w": 311.109375,
+      "h": 279.984375
+    },
+    "screenWidthGain": 3.828302249567391,
+    "path": "docs/screenshots/stage9/after/gb-focus-844x390.png"
+  },
+  {
+    "device": "sp",
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "before": {
+      "w": 111.04202270507812,
+      "h": 74.02281188964844
+    },
+    "after": {
+      "w": 420,
+      "h": 280
+    },
+    "screenWidthGain": 3.7823518499433164,
+    "path": "docs/screenshots/stage9/after/sp-focus-844x390.png"
+  }
+]

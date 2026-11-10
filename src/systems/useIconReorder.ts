@@ -80,9 +80,11 @@ export function useIconReorder(
       onPointerMove: (e: PointerEvent<HTMLDivElement>) => {
         const g = gesture.current;
         if (!g || g.id !== e.pointerId) return;
-        if (!g.active && Math.hypot(e.clientX - g.x, e.clientY - g.y) > 8)
+        if (!g.active && Math.hypot(e.clientX - g.x, e.clientY - g.y) > 8) {
+          // A page/grid swipe must not turn into a tap on the selected app.
+          suppress.current = true;
           cancel();
-        else if (g.active) e.preventDefault();
+        } else if (g.active) e.preventDefault();
       },
       onPointerUp: (e: PointerEvent<HTMLDivElement>) => up(e),
       onPointerCancel: (e: PointerEvent<HTMLDivElement>) => up(e, true),

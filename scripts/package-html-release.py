@@ -13,12 +13,15 @@ with ZipFile(out, 'w', ZIP_DEFLATED, compresslevel=9) as archive:
     archive.write(root / 'LICENSE', 'LICENSE.txt')
     for file in sorted((root / 'public' / 'licenses').glob('*')):
         if file.is_file(): archive.write(file, 'licenses/' + file.name)
-    for name in ['DEVELOPMENT_STAGES.md', 'EXTERNAL_EMULATORS.md', 'SYSTEM_RESOURCES.md', 'research/THREEDS_VISUAL_SPEC.md', 'research/PSP_VISUAL_SPEC.md', 'research/VITA_VISUAL_SPEC.md', 'research/EXTERNAL_EMULATOR_PROTOCOL.md', 'research/THIRD_PARTY_UI.md', 'research/EMULATOR_FEASIBILITY.md', 'research/EXISTING_SYSTEMS_AUDIT.md', 'ACCEPTANCE.md', 'CONTROL_AUDIT.md', 'design/ASSETS.md', 'design/THEMES.md', 'design/STAGE8_PRESENTATIONS.md', 'research/STAGE7_SRAM.md', 'research/STAGE7_SRAM_EVIDENCE.json', 'design/FLAT_PROMPTS.md', 'research/NATIVE_SYSTEMS.md', 'research/CLAMSHELL.md']:
+    for name in ['DEVELOPMENT_STAGES.md', 'EXTERNAL_EMULATORS.md', 'SYSTEM_RESOURCES.md', 'research/THREEDS_VISUAL_SPEC.md', 'research/PSP_VISUAL_SPEC.md', 'research/VITA_VISUAL_SPEC.md', 'research/EXTERNAL_EMULATOR_PROTOCOL.md', 'research/THIRD_PARTY_UI.md', 'research/EMULATOR_FEASIBILITY.md', 'research/EXISTING_SYSTEMS_AUDIT.md', 'ACCEPTANCE.md', 'STAGE9_ACCEPTANCE.md', 'CONTROL_AUDIT.md', 'design/ASSETS.md', 'design/THEMES.md', 'design/STAGE8_PRESENTATIONS.md', 'research/STAGE7_SRAM.md', 'research/STAGE7_SRAM_EVIDENCE.json', 'design/FLAT_PROMPTS.md', 'research/NATIVE_SYSTEMS.md', 'research/CLAMSHELL.md']:
         archive.write(root / 'docs' / name, 'docs/' + name)
     for folder in ['current']:
         for file in sorted((root / 'docs' / 'screenshots' / folder).iterdir()):
             if file.suffix not in {'.png', '.md', '.json'}: continue
             archive.write(file, 'docs/screenshots/' + folder + '/' + file.name)
+    for file in sorted((root / 'docs' / 'screenshots' / 'stage9').rglob('*')):
+        if file.is_file() and file.suffix in {'.png', '.html', '.md', '.json'}:
+            archive.write(file, 'docs/screenshots/stage9/' + str(file.relative_to(root / 'docs' / 'screenshots' / 'stage9')))
     for file in sorted((root / 'docs' / 'screenshots').glob('flat-*.png')):
         archive.write(file, 'docs/screenshots/' + file.name)
     archive.writestr('README.txt', readme)
@@ -35,5 +38,6 @@ files = [out,source_out, *sorted((root / 'public' / 'standalone').glob('*.html')
 (root / 'releases' / 'SHA256SUMS').write_text(''.join(f'{sha256(f.read_bytes()).hexdigest()}  {f.relative_to(root)}\n' for f in files))
 with ZipFile(out) as archive:
     assert archive.testzip() is None
-    assert len([name for name in archive.namelist() if name.endswith('.html')]) == 8
+    assert len([name for name in archive.namelist() if '/' not in name and name.endswith('.html')]) == 8
+    assert 'docs/screenshots/stage9/compare.html' in archive.namelist()
 print(f'Packaged {out.name}: {out.stat().st_size:,} bytes, 8 HTML files; {source_out.name}: {source_out.stat().st_size:,} bytes, runnable project. ZIP CRC and SHA-256 verified.')

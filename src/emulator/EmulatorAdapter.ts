@@ -98,6 +98,9 @@ export class EmulatorAdapter {
         EJS_VirtualGamepadSettings: [],
         EJS_defaultOptions: {
           shader: "disabled",
+          ...(system === "gb"
+            ? { mgba_gb_model: "Game Boy", mgba_gb_colors: "DMG Green" }
+            : {}),
           ...(system === "nds"
             ? {
                 desmume_screens_layout: "top/bottom",
