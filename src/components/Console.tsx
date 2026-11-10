@@ -30,8 +30,6 @@ interface Props {
   onLight: () => void;
   onPower: () => void;
   powerDisabled?: boolean;
-  onCartridge?: () => void;
-  cartridgeName?: string;
   onFold: () => void;
   foldDisabled?: boolean;
   onLidMotion: () => void;
@@ -55,8 +53,6 @@ export function Console({
   onLight,
   onPower,
   powerDisabled,
-  onCartridge,
-  cartridgeName,
   onFold,
   foldDisabled = false,
   onLidMotion,
@@ -348,7 +344,7 @@ export function Console({
         <div className="hinge-occlusion" />
         {d.powerKey && (
           <button
-            className={`photo-power power-button ${powered ? "powered" : ""}`}
+            className={`photo-power ${powered ? "powered" : ""}`}
             disabled={powerDisabled}
             title={powered ? "关闭电源" : "开启电源"}
             style={percentRect(
@@ -364,7 +360,7 @@ export function Console({
               d.height,
             )}
             onClick={onPower}
-            aria-label={powered ? "关闭电源" : "开启电源"}
+            aria-label={powered ? "机身电源：关闭" : "机身电源：开启"}
           />
         )}
         <div className="base-plane">
@@ -482,27 +478,6 @@ export function Console({
           )}
         </div>
       </div>
-      {onCartridge && (
-        <button
-          className="console-cartridge cartridge-button"
-          aria-label="选择卡带"
-          onClick={onCartridge}
-          title={cartridgeName ? `更换 ${cartridgeName}` : "选择卡带"}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            aria-hidden="true"
-          >
-            <path d="M5 3h14v18H5zM8 3v5h8V3M9 17h6M9 19h6" />
-          </svg>
-          <span>{cartridgeName || "选择卡带"}</span>
-        </button>
-      )}
     </div>
   );
 }

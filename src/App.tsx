@@ -35,6 +35,7 @@ import {
   Pause,
   Play,
   Plus,
+  Power,
   RotateCcw,
   Save,
   ShieldCheck,
@@ -1010,12 +1011,6 @@ export default function App() {
             onLight={() => setLight(!light)}
             onPower={power}
             powerDisabled={busy || !hydrated || status === "loading"}
-            onCartridge={
-              !STANDALONE && !!DEVICE_ADAPTERS[deviceId]
-                ? () => setLibraryOpen(true)
-                : undefined
-            }
-            cartridgeName={game?.name}
             onFold={fold}
             foldDisabled={busy}
             onLidMotion={() => input.releaseAll()}
@@ -1356,7 +1351,27 @@ export default function App() {
           </>
         }
       />
-      <div className="studio-dock">
+      <div className="studio-dock" aria-label="电源与卡带">
+        <button
+          className={`power-button dock-power ${powered ? "powered" : ""}`}
+          onClick={power}
+          disabled={busy || !hydrated || status === "loading"}
+          aria-label={powered ? "关闭电源" : "开启电源"}
+        >
+          <Power size={18} />
+          <span>{powered ? "关机" : "开机"}</span>
+        </button>
+        {!STANDALONE && !!DEVICE_ADAPTERS[deviceId] && (
+          <button
+            className="cartridge-button dock-cartridge"
+            aria-label="选择卡带"
+            onClick={() => setLibraryOpen(true)}
+            title={game ? `更换 ${game.name}` : "选择卡带"}
+          >
+            <FolderOpen size={18} />
+            <span>{game ? "更换卡带" : "选择卡带"}</span>
+          </button>
+        )}
         <button
           className="mobile-tools-button"
           aria-label="操作与设置"
@@ -1364,6 +1379,7 @@ export default function App() {
           onClick={() => setToolsOpen((v) => !v)}
         >
           <SlidersHorizontal size={18} />
+          <span>设置</span>
         </button>
         <span
           className={`status-chip ${status}`}
