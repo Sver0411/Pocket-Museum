@@ -35,7 +35,11 @@ with ZipFile(source_out,'w',ZIP_DEFLATED,compresslevel=9) as archive:
                 archive.write(file,'PocketMuseum/'+str(file.relative_to(root)))
 with ZipFile(source_out) as archive: assert archive.testzip() is None
 files = [out,source_out, *sorted((root / 'public' / 'standalone').glob('*.html'))]
-(root / 'releases' / 'SHA256SUMS').write_text(''.join(f'{sha256(f.read_bytes()).hexdigest()}  {f.relative_to(root)}\n' for f in files))
+(root / 'releases' / 'SHA256SUMS').write_text(
+    ''.join(f'{sha256(f.read_bytes()).hexdigest()}  {f.relative_to(root).as_posix()}\n' for f in files),
+    encoding='utf-8',
+    newline='\n',
+)
 with ZipFile(out) as archive:
     assert archive.testzip() is None
     assert len([name for name in archive.namelist() if '/' not in name and name.endswith('.html')]) == 8
