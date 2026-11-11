@@ -26,7 +26,7 @@ with ZipFile(out, 'w', ZIP_DEFLATED, compresslevel=9) as archive:
         archive.write(file, 'docs/screenshots/' + file.name)
     archive.writestr('README.txt', readme)
 source_out=root/'releases'/'pocket-museum-source.zip'
-source_files=['.gitignore','LICENSE','README.md','index.html','emulator.html','package.json','package-lock.json','tsconfig.json','vite.config.ts','vitest.config.ts','playwright.config.ts']
+source_files=['.gitattributes','.gitignore','LICENSE','README.md','index.html','emulator.html','package.json','package-lock.json','tsconfig.json','vite.config.ts','vitest.config.ts','playwright.config.ts']
 with ZipFile(source_out,'w',ZIP_DEFLATED,compresslevel=9) as archive:
     for name in source_files: archive.write(root/name,'PocketMuseum/'+name)
     for folder in ['src','scripts','tests','public','docs','.github']:

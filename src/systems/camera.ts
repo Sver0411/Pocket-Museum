@@ -3,12 +3,14 @@ import { addMedia } from "./media";
 type CameraState = {
   stream: MediaStream | null;
   busy: boolean;
+  frameReady: boolean;
   error: string;
   facing: "user" | "environment";
 };
 let state: CameraState = {
   stream: null,
   busy: false,
+  frameReady: false,
   error: "",
   facing: "environment",
 };
@@ -31,13 +33,24 @@ export function useCamera() {
   );
 }
 export function setCameraVideo(element: HTMLVideoElement | null) {
+  video?.removeEventListener("loadeddata", markFrameReady);
+  video?.removeEventListener("playing", markFrameReady);
   video = element;
-  if (element && state.stream) element.srcObject = state.stream;
+  if (element && state.stream) {
+    element.addEventListener("loadeddata", markFrameReady);
+    element.addEventListener("playing", markFrameReady);
+    element.srcObject = state.stream;
+    markFrameReady();
+  }
+}
+function markFrameReady() {
+  if (video?.videoWidth && video.readyState >= 2 && !state.frameReady)
+    publish({ frameReady: true });
 }
 export function stopCamera() {
   sequence++;
   state.stream?.getTracks().forEach((t) => t.stop());
-  publish({ stream: null, busy: false });
+  publish({ stream: null, busy: false, frameReady: false });
   if (video) video.srcObject = null;
 }
 export async function startCamera(facing = state.facing) {
@@ -73,8 +86,8 @@ export async function startCamera(facing = state.facing) {
   }
 }
 export async function takePhoto(device: string) {
-  if (!video || !state.stream || !video.videoWidth)
-    throw Error("Start the camera before taking a photo.");
+  if (!video || !state.stream || !state.frameReady || !video.videoWidth)
+    throw Error("Wait for the camera preview before taking a photo.");
   const canvas = document.createElement("canvas");
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;

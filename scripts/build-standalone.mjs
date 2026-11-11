@@ -14,6 +14,7 @@ const result = await build({
   define: {
     "process.env.NODE_ENV": '"production"',
     "import.meta.hot": "undefined",
+    "import.meta.env.BASE_URL": '"/"',
   },
   legalComments: "inline",
 });

@@ -1505,7 +1505,9 @@ function SystemApplication({
   if (view === "sound" || view === "music")
     return <MediaApp {...props} kind="audio" />;
   if (view === "videos") return <MediaApp {...props} kind="video" />;
-  if (view === "notes") return <NotebookApp {...props} />;
+  if (view === "notes") return s.section.endsWith("-photos")
+    ? <MediaApp {...props} kind="image" />
+    : <NotebookApp {...props} />;
   if (view === "browser") return <BrowserApp {...props} />;
   if (view === "activity") return <ActivityApp {...props} />;
   if (view === "friends" && s.device === "3ds")

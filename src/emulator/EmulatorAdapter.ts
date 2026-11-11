@@ -1,4 +1,5 @@
 import { coreFor } from "./systems";
+import { publicUrl } from "../publicUrl";
 import type { GameSystem } from "./systems";
 import { RETROPAD } from "./protocol";
 import type { Button } from "./protocol";
@@ -85,7 +86,7 @@ export class EmulatorAdapter {
         EJS_core: core,
         EJS_gameName: gameId,
         EJS_gameUrl: url,
-        EJS_pathtodata: "/vendor/emulatorjs/4.2.3/data/",
+        EJS_pathtodata: publicUrl("/vendor/emulatorjs/4.2.3/data/"),
         EJS_startOnLoaded: false,
         EJS_language: "en-US",
         EJS_disableAutoLang: false,
@@ -177,7 +178,7 @@ export class EmulatorAdapter {
         },
       });
       const script = document.createElement("script");
-      script.src = "/vendor/emulatorjs/4.2.3/data/loader.js";
+      script.src = publicUrl("/vendor/emulatorjs/4.2.3/data/loader.js");
       script.onerror = () => fail("无法加载 EmulatorJS 资源");
       document.body.append(script);
     });

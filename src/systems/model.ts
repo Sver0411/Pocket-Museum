@@ -591,6 +591,7 @@ export interface NativeState {
   page: number;
   dialog: string;
   prefs: Record<string, string>;
+  saveFailed: boolean;
   open: string[];
   started: string[];
   room: string;
@@ -629,6 +630,8 @@ export type NativeAction =
   | { type: "psp-information" }
   | { type: "set"; key: string; value: string }
   | { type: "hydrate"; prefs: Record<string, string> }
+  | { type: "save-status"; failed: boolean }
+  | { type: "retry-save" }
   | { type: "dialog"; text: string; pending?: string }
   | { type: "dismiss" }
   | { type: "close"; app: string }
@@ -649,6 +652,7 @@ export function initialSystem(
     page: 0,
     dialog: "",
     prefs,
+    saveFailed: false,
     open: [],
     started: [],
     room: "",
@@ -700,6 +704,8 @@ export function systemBack(s: NativeState): NativeState {
       section: "",
       selection: Math.max(0, XMB[s.category].items.indexOf(s.section || s.app)),
     };
+  if (s.app === "notes" && s.section.endsWith("-photos"))
+    return { ...s, section: s.section.slice(0, -"-photos".length) };
   if (s.section)
     return {
       ...s,
@@ -881,9 +887,14 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
       return {
         ...initialSystem(a.device, s.prefs),
         phase: a.on ? "boot" : "off",
+        saveFailed: a.device === s.device && s.saveFailed,
       };
     case "hydrate":
       return { ...s, prefs: a.prefs };
+    case "save-status":
+      return s.saveFailed === a.failed ? s : { ...s, saveFailed: a.failed };
+    case "retry-save":
+      return { ...s, prefs: { ...s.prefs } };
     case "ready":
       return {
         ...s,

@@ -104,6 +104,26 @@ export const storage = {
     transact<T | undefined>("settings", "readonly", (s) => s.get(key)),
   putSetting: (key: string, value: unknown) =>
     transact("settings", "readwrite", (s) => s.put(value, key)),
+  listSaves: () => transact<Save[]>("saves", "readonly", (s) => s.getAll()),
+  restoreBackup: async (saves: Save[], settings: Record<string, unknown>) => {
+    const database = await db();
+    await new Promise<void>((resolve, reject) => {
+      const tx = database.transaction(["saves", "settings"], "readwrite");
+      const saveStore = tx.objectStore("saves");
+      const settingsStore = tx.objectStore("settings");
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error ?? new Error("备份恢复失败"));
+      for (const save of saves) {
+        const existing = saveStore.get([save.gameId, save.kind]);
+        existing.onsuccess = () => {
+          if (!existing.result || existing.result.updatedAt < save.updatedAt)
+            saveStore.put(save);
+        };
+      }
+      for (const [key, value] of Object.entries(settings))
+        settingsStore.put(value, key);
+    });
+  },
 };
 export async function identify(bytes: Uint8Array) {
   const hash = await crypto.subtle.digest("SHA-256", new Uint8Array(bytes));

@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { publicUrl } from "../publicUrl";
 import type { DeviceDefinition, Rect } from "../devices";
 /** Visual outlines use source-image coordinates, independently of generous hit targets. */
 const crosses: Record<string, number[][]> = {
@@ -99,7 +100,7 @@ export function photoArt(
   mask: string,
 ): CSSProperties {
   return {
-    backgroundImage: `url(${d.asset})`,
+    backgroundImage: `url(${publicUrl(d.asset)})`,
     backgroundSize: `${(d.width / rect.w) * 100}% ${(d.height / rect.h) * 100}%`,
     backgroundPosition: `${(rect.x / (d.width - rect.w)) * 100}% ${(rect.y / (d.height - rect.h)) * 100}%`,
     maskImage: mask,

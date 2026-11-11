@@ -775,7 +775,7 @@ export function MediaApp(
 export function CameraPanel(props: AppProps) {
   const camera = useCamera(),
     [error, setError] = useState(""),
-    [count, setCount] = useState(0);
+    [lastPhoto, setLastPhoto] = useState("");
   useEffect(() => () => stopCamera(), []);
   const { items } = useMedia(props.s.device, "image");
   if (props.top)
@@ -802,7 +802,7 @@ export function CameraPanel(props: AppProps) {
         )}
       </div>
       <div className="camera-info">
-        Photos　{items.length}　{count > 0 ? "Saved" : ""}
+        Photos　{items.length}　{lastPhoto ? "Saved" : ""}
       </div>
       <div className="app-actions">
         <button onClick={() => void startCamera()} disabled={camera.busy}>
@@ -818,21 +818,35 @@ export function CameraPanel(props: AppProps) {
         </button>
         <button
           aria-label="Take photo"
-          disabled={!camera.stream}
-          onClick={() =>
+          disabled={!camera.frameReady}
+          onClick={() => {
+            setError("");
             void takePhoto(props.s.device)
-              .then(() => setCount((v) => v + 1))
-              .catch((e) => setError(String(e)))
-          }
+              .then((photo) => setLastPhoto(photo.id))
+              .catch((e) => setError(String(e)));
+          }}
         >
           <Camera size={20} />
         </button>
       </div>
+      {props.s.app === "camera" && (
+        <div className="app-actions">
+          <button onClick={() => {
+            pref(props, "media:image", "");
+            props.dispatch({ type: "section", name: "photos" });
+          }}>View Photos</button>
+          {lastPhoto && <button onClick={() => {
+            pref(props, "media:image", lastPhoto);
+            props.dispatch({ type: "section", name: "photos" });
+          }}>View last photo</button>}
+        </div>
+      )}
       <ErrorMessage error={camera.error || error} />
     </div>
   );
 }
 export function CameraApp(props: AppProps) {
+  if (props.s.section === "photos") return <MediaApp {...props} kind="image" />;
   return props.top ? (
     <CameraPanel {...props} />
   ) : (
@@ -976,6 +990,7 @@ export function NotebookApp(props: AppProps) {
   const [typed, setTyped] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [message, setMessage] = useState("");
+  const [notePhoto, setNotePhoto] = useState("");
   useAppButtons(root, props.s.device, !props.top && !confirmClear);
   useAppButtons(clearDialog, props.s.device, !props.top && confirmClear);
   useEffect(() => {
@@ -993,6 +1008,7 @@ export function NotebookApp(props: AppProps) {
     setTyped(false);
     setConfirmClear(false);
     setMessage("");
+    setNotePhoto("");
   }, [page]);
   const change = (delta: Partial<typeof note>) => {
     const next = [...notes];
@@ -1015,10 +1031,29 @@ export function NotebookApp(props: AppProps) {
       ctx.lineWidth = stroke.width;
       ctx.stroke(new Path2D(stroke.d));
     }
+    if (note.text) {
+      ctx.resetTransform();
+      ctx.fillStyle = "#353a40";
+      ctx.font = "18px sans-serif";
+      const lines = note.text.split("\n").flatMap((line) => {
+        const wrapped: string[] = [];
+        let row = "";
+        for (const letter of line) {
+          if (ctx.measureText(row + letter).width > canvas.width - 40) {
+            wrapped.push(row);
+            row = "";
+          }
+          row += letter;
+        }
+        return [...wrapped, row];
+      });
+      lines.slice(0, 16).forEach((line, index) => ctx.fillText(line, 20, 30 + index * 24));
+    }
     try {
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) throw new Error("The note image could not be created.");
-      await addMedia("3ds", blob, `Game Note ${page + 1}.png`);
+      const image = await addMedia("3ds", blob, `Game Note ${page + 1}.png`);
+      setNotePhoto(image.id);
       setMessage("Saved to View Photos.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
@@ -1033,6 +1068,7 @@ export function NotebookApp(props: AppProps) {
     );
   const back = () => {
     if (confirmClear) setConfirmClear(false);
+    else if (props.s.saveFailed && page >= 0) props.dispatch({ type: "retry-save" });
     else props.dispatch({ type: "back" });
   };
   if (page < 0)
@@ -1069,7 +1105,27 @@ export function NotebookApp(props: AppProps) {
         <button type="button" title="Clear note" aria-label="Clear note" onClick={() => setConfirmClear(true)}><Trash2 size={16} /></button>
         <button type="button" title="Typed note" aria-label="Typed note" aria-pressed={typed} onClick={() => setTyped(!typed)}><Keyboard size={16} /></button>
       </footer>
-      {message && <div className="three-notes-message" role="status">{message}</div>}
+      {message && !props.s.saveFailed && <div className="three-notes-message" role="status">
+        {message}
+        {notePhoto && <button type="button" onClick={() => {
+          pref(props, "media:image", notePhoto);
+          props.dispatch({ type: "section", name: `note-${page}-photos` });
+        }}>View photo</button>}
+      </div>}
+      {props.s.saveFailed && (
+        <div className="three-notes-message" role="alert">
+          Note not saved.
+          <button type="button" onClick={() => props.dispatch({ type: "retry-save" })}>Retry</button>
+          <button type="button" onClick={() => {
+            const url = URL.createObjectURL(new Blob([JSON.stringify(note, null, 2)], { type: "application/json" }));
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `game-note-${page + 1}.json`;
+            link.click();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+          }}>Download draft</button>
+        </div>
+      )}
       {confirmClear && <div className="three-notes-overlay" ref={clearDialog} role="alertdialog" aria-label="Clear note">
         <div><p>Clear this note?</p>
           <button type="button" onClick={() => setConfirmClear(false)}>Cancel</button>

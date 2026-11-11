@@ -1,5 +1,7 @@
 import { FocusControls } from "./components/FocusControls";
 import { HostDialog } from "./components/HostDialog";
+import { publicUrl } from "./publicUrl";
+import { exportBackup, importBackup } from "./storage/backup";
 import { PpssppClient } from "./emulator/PpssppClient";
 import {
   DevicePresentation,
@@ -155,6 +157,8 @@ export default function App() {
         .catch(() => {});
   }, []);
   const [headphones, setHeadphones] = useState(false);
+  const [lastPlayed, setLastPlayed] = useState<{ device: DeviceId; gameId: string }>();
+  const resumeState = useRef(false);
   const displayProfiles = useRef<Partial<Record<DeviceId, DisplayProfile>>>({});
   const applyDisplay = (id: DeviceId) => {
     const c = displayProfiles.current[id] ?? defaultDisplay();
@@ -294,7 +298,7 @@ export default function App() {
           demo: true,
           importedAt: 0,
         }));
-        const [imported, selected, config, profiles, gbSelected, ndsSelected] =
+        const [imported, selected, config, profiles, gbSelected, ndsSelected, recent] =
           await Promise.all([
             storage.games(),
             storage.getSetting<string>("selectedGame"),
@@ -308,6 +312,7 @@ export default function App() {
             ),
             storage.getSetting<string>("selectedGame:gb"),
             storage.getSetting<string>("selectedGame:nds"),
+            storage.getSetting<{ device: DeviceId; gameId: string }>("lastPlayed"),
           ]);
         if (!mounted.current) return;
         const list = [
@@ -320,6 +325,7 @@ export default function App() {
           nds: ndsSelected ?? "",
         };
         setGames(list);
+        setLastPlayed(recent);
         setGame(
           list.find(
             (g) =>
@@ -583,8 +589,8 @@ export default function App() {
   useEffect(() => {
     if (native.state.shutdown) void guarded(stop);
   }, [native.state.shutdown]);
-  const startPower = () => {
-    if (!DEVICE_ADAPTERS[deviceRef.current] || STANDALONE || !gameRef.current) {
+  const startPower = (target = deviceRef.current, cartridge = gameRef.current) => {
+    if (!DEVICE_ADAPTERS[target] || STANDALONE || !cartridge) {
       setClosed(false);
       setStatus("running");
       statusRef.current = "running";
@@ -614,6 +620,8 @@ export default function App() {
     const b = new EmulatorBridge(frame, session);
     bridge.current = b;
     const selected = gameRef.current;
+    const restore = resumeState.current;
+    resumeState.current = false;
     if (!selected) return;
     try {
       const native = await storage.getSave(selected.id, "native");
@@ -624,7 +632,7 @@ export default function App() {
         else {
           const demo = DEMOS.find((d) => d.id === selected.id);
           if (!demo) throw new Error("找不到卡带资源");
-          const response = await fetch(demo.url);
+          const response = await fetch(publicUrl(demo.url));
           if (!response.ok) throw new Error("卡带读取失败，请重试");
           bytes = new Uint8Array(await response.arrayBuffer());
           if ((await identify(bytes)) !== selected.id)
@@ -635,11 +643,27 @@ export default function App() {
       if (bridge.current !== b) return;
       await b.start(bytes, selected.id, native?.data, gameSystem(selected));
       if (bridge.current !== b) return;
+      let restoredState = false;
+      if (restore) {
+        try {
+          const saved = await storage.getSave(selected.id, "state");
+          if (saved?.core === coreFor(gameSystem(selected)) && saved.version === "4.2.3") {
+            await b.loadState(saved.data);
+            restoredState = true;
+          }
+        } catch (error) {
+          report(error);
+        }
+      }
+      if (bridge.current !== b) return;
       const s = soundRef.current;
       await b.volume(s.muted ? 0 : s.volume / 100);
       if (closedRef.current) await b.pause(true);
       setStatus(closedRef.current ? "paused" : "running");
-      notify(native ? "原生存档已恢复" : "游戏已启动");
+      const recent = { device: deviceRef.current, gameId: selected.id };
+      setLastPlayed(recent);
+      void storage.putSetting("lastPlayed", recent).catch(report);
+      notify(restoredState ? "即时存档已恢复" : native ? "原生存档已恢复" : "游戏已启动");
     } catch (e) {
       if (bridge.current === b) {
         setStatus("error");
@@ -760,7 +784,7 @@ export default function App() {
       await bridge.current.loadState(save.data);
       notify("即时存档已读取");
     });
-  const switchDevice = (id: DeviceId) =>
+  const switchDevice = (id: DeviceId, quick?: { game: Game; resume: boolean }) =>
     void guarded(async () => {
       document.getElementById("device-picker")?.hidePopover();
       if (id === deviceId && !inMuseum) return;
@@ -768,7 +792,15 @@ export default function App() {
       setClosed(false);
       setFlat(false);
       applyDisplay(id);
-      applyGame(id);
+      if (quick) {
+        await storage.putSetting(settingKey(id), quick.game.id);
+        selectedGames.current[selectionKey(id)] = quick.game.id;
+        gameRef.current = quick.game;
+        setGame(quick.game);
+        resumeState.current = quick.resume;
+      } else {
+        applyGame(id);
+      }
       setDeviceId(id);
       setInMuseum(false);
       setToolsOpen(false);
@@ -780,6 +812,7 @@ export default function App() {
           `#/play/${id}`,
         );
       setError("");
+      if (quick) startPower(id, quick.game);
     });
   const returnMuseum = () =>
     void guarded(async () => {
@@ -914,7 +947,26 @@ export default function App() {
     return () => window.removeEventListener("keydown", shortcut);
   }, [inMuseum, help, libraryOpen, connectionOpen, focusPlay, toolsOpen, input]);
   const adapter = DEVICE_ADAPTERS[deviceId];
-  if (inMuseum) return <MuseumHome onSelect={switchDevice} />;
+  if (inMuseum) {
+    const demo = games.find((entry) => entry.demo && entry.system === "gba");
+    const recent = lastPlayed && games.find((entry) =>
+      entry.id === lastPlayed.gameId && acceptsGame(lastPlayed.device, entry));
+    return <MuseumHome
+      standalone={STANDALONE}
+      onSelect={switchDevice}
+      onQuickPlay={demo && !busy ? () => switchDevice("gba", { game: demo, resume: false }) : undefined}
+      recent={lastPlayed && recent && !busy ? {
+        title: recent.name,
+        play: () => switchDevice(lastPlayed.device, { game: recent, resume: true }),
+      } : undefined}
+      onExport={async () => {
+        const bytes = new TextEncoder().encode(await exportBackup());
+        download(bytes, "pocket-museum-backup.json");
+      }}
+      onImport={importBackup}
+      error={error}
+    />;
+  }
   const ready = ["running", "paused"].includes(status),
     powered = status !== "off" && status !== "error";
   return (
@@ -935,7 +987,7 @@ export default function App() {
           </button>
         )}
         <a
-          href={STANDALONE ? undefined : "/"}
+          href={STANDALONE ? undefined : publicUrl("/")}
           className="studio-brand"
           aria-label="Pocket Museum 首页"
           onClick={(e) => {
@@ -995,7 +1047,7 @@ export default function App() {
               className="device-choice"
               aria-label="切换掌机"
             >
-              <img src={device.asset} alt="" />
+              <img src={publicUrl(device.asset)} alt="" />
               {device.label}
               <ChevronDown size={14} />
             </button>
@@ -1012,7 +1064,7 @@ export default function App() {
                   onClick={() => switchDevice(d.id)}
                   disabled={busy || status === "loading"}
                 >
-                  <img src={d.asset} alt="" />
+                  <img src={publicUrl(d.asset)} alt="" />
                   {d.label}
                 </button>
               ))}
@@ -1408,7 +1460,7 @@ export default function App() {
                 {!STANDALONE && (
                   <a
                     className="setting-row"
-                    href={`/standalone/${deviceId}.html`}
+                    href={publicUrl(`/standalone/${deviceId}.html`)}
                     download
                   >
                     下载单文件版
@@ -1622,6 +1674,13 @@ export default function App() {
         </div>
       )}
 
+      {native.state.saveFailed &&
+        !(native.state.app === "notes" && /^note-\d+$/.test(native.state.section)) && (
+          <div className="error-banner" role="alert">
+            <span>掌机数据未保存。当前改动暂留在此页面。</span>
+            <button onClick={() => native.dispatch({ type: "retry-save" })}>重试保存</button>
+          </div>
+        )}
       {toast && (
         <div className="toast" role="status">
           <Check size={16} />
@@ -1776,7 +1835,7 @@ export default function App() {
               <ShieldCheck size={14} />
               最大 {adapter?.maxMiB} MB · 卡带与存档仅保存在当前浏览器
             </p>
-            <a href="/licenses/NOTICE.md" target="_blank" rel="noreferrer">
+            <a href={publicUrl("/licenses/NOTICE.md")} target="_blank" rel="noreferrer">
               游戏来源与开源许可 ↗
             </a>
           </section>
@@ -1829,7 +1888,7 @@ export default function App() {
               合盖继续运行。清除浏览器数据会移除卡带和存档，请导出备份。
             </p>
             {!STANDALONE && (
-              <a href="/licenses/NOTICE.md" target="_blank" rel="noreferrer">
+              <a href={publicUrl("/licenses/NOTICE.md")} target="_blank" rel="noreferrer">
                 开源许可与来源 ↗
               </a>
             )}

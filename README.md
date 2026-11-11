@@ -4,7 +4,9 @@
 
 从展台上挑选一台掌机，按下电源，打开熟悉的界面。Pocket Museum 将经典机身、实体按键、翻盖动作与游戏体验放进同一个网页，用奶油色展馆和各具特色的主题背景串起七款掌机。
 
-[项目源码](https://github.com/Sver0411/Pocket-Museum) · [界面预览](docs/screenshots/current) · [单文件版](#单文件版)
+[在线试玩](https://sver0411.github.io/Pocket-Museum/) · [下载离线掌机体验](https://github.com/Sver0411/Pocket-Museum/releases/latest/download/pocket-museum-html.zip) · [界面预览](docs/screenshots/current)
+
+网页版可以从首页试玩《2048 Advance》、继续上次的卡带，也支持 GB、GBA 和 NDS 卡带导入。离线 HTML 包含机身、按键、翻盖和本地系统界面，游戏运行使用网页版或本地启动的完整项目。
 
 ![Pocket Museum 掌机展馆](docs/screenshots/current/museum-desktop.png)
 
@@ -40,6 +42,8 @@ Game Boy 与 GBA SP 提供专注模式，将屏幕按原生比例放大，并提
 
 本地宝可梦卡带会根据文件头显示对应版本名称。选择卡带并开启电源，就能使用机身按键游玩。原生存档、即时存档以及存档导入导出连接起每次游戏；游戏、媒体和设置通过浏览器本地存储保存。
 
+网页版展馆的「存档备份」可以导出游戏存档、系统设置和笔记。恢复时保留更新时间较新的游戏存档。自行导入的卡带和照片、录音等媒体需要单独保留。3DS 笔记写入失败时，可以重试或下载当前草稿。
+
 PSP 页面提供 PPSSPP 连接入口，网页上的按键和摇杆可以控制本地模拟器。选择共享窗口后，模拟器画面会显示在掌机屏幕中。
 
 ## 掌机里的日常
@@ -71,6 +75,8 @@ npm run preview
 Pocket Museum 同时提供七机整合页面与每款掌机的独立 HTML。下载后直接打开，即可体验机身、系统界面、按键、声音与翻盖交互。完整项目提供游戏运行与进度管理。
 
 [七机整合版](public/standalone/pocket-museum-all.html) · [Game Boy](public/standalone/gb.html) · [GBA](public/standalone/gba.html) · [GBA SP](public/standalone/sp.html) · [DS](public/standalone/ds.html) · [3DS](public/standalone/3ds.html) · [PSP](public/standalone/psp.html) · [PS Vita](public/standalone/vita.html)
+
+[正式下载与 SHA-256 校验文件](https://github.com/Sver0411/Pocket-Museum/releases/latest)随版本一起发布。
 
 ## 技术组成
 

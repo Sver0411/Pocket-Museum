@@ -383,6 +383,10 @@ test.describe("browser camera and microphone integration", () => {
       );
     await page.getByRole("button", { name: "Take photo", exact: true }).click();
     await expect(page.locator(".camera-info")).toContainText(/Photos\s+1/);
+    await page.getByRole("button", { name: "View last photo", exact: true }).click();
+    await expect(page.locator(".media-detail .media-photo")).toBeVisible();
+    await page.getByRole("button", { name: "Library", exact: true }).click();
+    await expect(page.locator(".media-library>button")).toHaveCount(1);
     await physical(page, "Home");
     await expect
       .poll(() =>

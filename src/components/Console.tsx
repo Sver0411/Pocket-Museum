@@ -1,4 +1,5 @@
 import { focusDevice } from "./focusDevice";
+import { publicUrl } from "../publicUrl";
 import { DsGameScreen } from "./DsGameScreen";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { projectiveMatrix, scaledQuad } from "./projection";
@@ -181,7 +182,7 @@ export function Console({
           <iframe
             key={session}
             title={d.id === "gb" ? "GB 游戏画面" : "GBA 游戏画面"}
-            src={`/emulator.html?session=${session}`}
+            src={publicUrl(`/emulator.html?session=${session}`)}
             onLoad={(e) => onFrame(e.currentTarget)}
             tabIndex={-1}
             allow="autoplay; gamepad"
@@ -219,7 +220,7 @@ export function Console({
   const photoStyle =
     d.lid && !focus
       ? {
-          backgroundImage: `url(${d.asset})`,
+          backgroundImage: `url(${publicUrl(d.asset)})`,
           backgroundSize: `${(d.width / d.lid!.w) * 100}% ${(d.height / d.lid!.h) * 100}%`,
           backgroundPosition: `${(d.lid!.x / (d.width - d.lid!.w)) * 100}% ${(d.lid!.y / (d.height - d.lid!.h)) * 100}%`,
         }
@@ -269,7 +270,7 @@ export function Console({
           key={session}
           title="DS 模拟器运行实例"
           className="ds-runtime"
-          src={`/emulator.html?session=${session}`}
+          src={publicUrl(`/emulator.html?session=${session}`)}
           tabIndex={-1}
           aria-hidden="true"
           allow="autoplay; gamepad"
@@ -378,7 +379,7 @@ export function Console({
         <div className="base-plane">
           <img
             className="device-photo base-face"
-            src={d.asset}
+            src={publicUrl(d.asset)}
             alt=""
             draggable={false}
             style={

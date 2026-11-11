@@ -17,6 +17,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run verify
+      - run: sha256sum --ignore-missing -c releases/SHA256SUMS
       - run: npm test
       - run: npm run build
       - run: npm run test:e2e
@@ -30,3 +31,27 @@ jobs:
             test-results/
             docs/screenshots/current/
           retention-days: 14
+  pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vite build --mode pages
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
+        id: deploy

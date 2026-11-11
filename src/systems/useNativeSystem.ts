@@ -30,6 +30,7 @@ export function useNativeSystem(
   };
   const held = useRef(new Map<Button, ReturnType<typeof setTimeout>>());
   const ready = useRef(false);
+  const unsaved = useRef(new Map<DeviceId, Record<string, string>>());
   const current = useRef(state);
   current.current = state;
   const chat = useLocalChat(
@@ -129,7 +130,10 @@ export function useNativeSystem(
           : (await storage.getSetting<Record<string, string>>(
               `system:${device}`,
             )) || {};
-        if (!cancelled) dispatch({ type: "hydrate", prefs });
+        if (!cancelled) {
+          dispatch({ type: "hydrate", prefs: unsaved.current.get(device) ?? prefs });
+          rawDispatch({ type: "save-status", failed: unsaved.current.has(device) });
+        }
       } catch {
       } finally {
         if (!cancelled) ready.current = true;
@@ -152,15 +156,30 @@ export function useNativeSystem(
   }, [device, powered]);
   useEffect(() => {
     if (!ready.current || state.device !== device) return;
-    if (standalone) {
+    let active = true;
+    const save = async () => {
       try {
-        localStorage.setItem(
-          `pocketsp:system:${device}`,
-          JSON.stringify(state.prefs),
-        );
-      } catch {}
-    } else
-      void storage.putSetting(`system:${device}`, state.prefs).catch(() => {});
+        if (standalone) {
+          localStorage.setItem(
+            `pocketsp:system:${device}`,
+            JSON.stringify(state.prefs),
+          );
+        } else {
+          await storage.putSetting(`system:${device}`, state.prefs);
+        }
+        if (active) {
+          unsaved.current.delete(device);
+          rawDispatch({ type: "save-status", failed: false });
+        }
+      } catch {
+        if (active) {
+          unsaved.current.set(device, state.prefs);
+          rawDispatch({ type: "save-status", failed: true });
+        }
+      }
+    };
+    void save();
+    return () => { active = false; };
   }, [device, state.prefs, state.device, standalone]);
   useEffect(() => {
     if (!powered || suspended) {

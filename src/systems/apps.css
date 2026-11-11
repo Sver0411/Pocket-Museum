@@ -520,6 +520,13 @@
   border-radius: 4px;
   font-size: 10px;
 }
+.three-notes-message button {
+  margin-left: 6px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: #fff3;
+  color: inherit;
+}
 .three-notes-overlay {
   position: absolute;
   inset: 0;

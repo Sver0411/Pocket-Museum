@@ -24,6 +24,41 @@
       "sha256": "393af6e47c989a7a5764c66f916ee2818afbd1a5cbf76a0517cdd2b589efe6bb"
     },
     {
+      "path": "assets/exhibits/3ds.webp",
+      "bytes": 39556,
+      "sha256": "4ea91ed90219e389b266ae30ebed78107f90b5f5e543acdd329a3b1c5f8ee0b9"
+    },
+    {
+      "path": "assets/exhibits/ds.webp",
+      "bytes": 29440,
+      "sha256": "050836887492ac3b4b3241c0dd36df1c0d66aa83948fbc03dc30ad13631ba46e"
+    },
+    {
+      "path": "assets/exhibits/gb.webp",
+      "bytes": 28086,
+      "sha256": "a9021051ed83340d9aca99820eb396a167f3adeac0dd94e0271ce068a0ca3a18"
+    },
+    {
+      "path": "assets/exhibits/gba.webp",
+      "bytes": 33178,
+      "sha256": "c420d13f6ad8bdbb040039547eb65ee9b1bd89c0ca398e4aaea317c72cbef8b3"
+    },
+    {
+      "path": "assets/exhibits/psp.webp",
+      "bytes": 29508,
+      "sha256": "d93efe032a753b48643ca226994bba0f019822f0519cc577bf1fd87541442470"
+    },
+    {
+      "path": "assets/exhibits/sp.webp",
+      "bytes": 30744,
+      "sha256": "ece8dce7ba13135cdc40552401177aceeb737bed20bff797618ada541f3a86d2"
+    },
+    {
+      "path": "assets/exhibits/vita.webp",
+      "bytes": 25866,
+      "sha256": "bc81c4aafb96cde93f50cf25343a7add4704c7836aab21b148f32f7ecf56bae8"
+    },
+    {
       "path": "assets/gb-v1.png",
       "bytes": 1915312,
       "sha256": "88ee6a094afa50edfdf25736a4de6354dd827b5cec66595f0637e84aaa753704"
@@ -320,8 +355,8 @@
     },
     {
       "path": "licenses/source/EmulatorJS-local-version.patch",
-      "bytes": 510,
-      "sha256": "45e8999b9c10e7adb772f724d9c20156c92ad0236be74fe50f014d2f2ea9a22b"
+      "bytes": 542,
+      "sha256": "aae50e70f7c8953e0e5e571070322854dceba61df9084c0336e7c5fc49d01243"
     },
     {
       "path": "licenses/source/EmulatorJS-v4.2.3.tar.gz",
@@ -430,8 +465,8 @@
     },
     {
       "path": "vendor/emulatorjs/4.2.3/data/emulator.min.js",
-      "bytes": 426334,
-      "sha256": "d26c475cae9accd10e88b521c5ed2216c5c7e864ceee36808dad3806fb837cec"
+      "bytes": 426326,
+      "sha256": "f948ee4d42c78e3a6a139a65c46a00a54f7f5d0734a615ad9a15cc824c04e313"
     },
     {
       "path": "vendor/emulatorjs/4.2.3/data/loader.js",

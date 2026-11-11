@@ -1,8 +1,8 @@
 PocketSP local resource patch, 2026-11-09:
-The bundled 4.2.3 data/emulator.min.js changes exactly one URL string:
-- https://cdn.emulatorjs.org/stable/data/version.json
-+ /vendor/emulatorjs/4.2.3/data/version.json
+The bundled 4.2.3 data/emulator.min.js changes the URL expression in checkForUpdates:
+- fetch("https://cdn.emulatorjs.org/stable/data/version.json")
++ fetch(window.EJS_pathtodata+"version.json")
 This redirects upstream's localhost-only update check to the bundled version
 metadata. No core code, input or emulation behavior was modified.
 The original unmodified source is included in EmulatorJS-v4.2.3.tar.gz.
-Equivalent source change in data/src/emulator.js:181 is the same URL replacement.
+Equivalent source change in data/src/emulator.js:181 uses the configured EJS_pathtodata.

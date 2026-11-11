@@ -1,4 +1,5 @@
 import type { DeviceId } from "../devices";
+import { publicUrl } from "../publicUrl";
 export type Cue =
   | "boot"
   | "shutdown"
@@ -92,7 +93,7 @@ export class AudioManager {
       if (!this.buffers.has(path))
         this.buffers.set(
           path,
-          fetch(path)
+          fetch(publicUrl(path))
             .then((r) => {
               if (!r.ok) throw new Error("Music unavailable");
               return r.arrayBuffer();
@@ -183,7 +184,7 @@ export class AudioManager {
       if (!this.buffers.has(path))
         this.buffers.set(
           path,
-          fetch(path)
+          fetch(publicUrl(path))
             .then((r) => {
               if (!r.ok) throw Error("Audio sample unavailable");
               return r.arrayBuffer();
