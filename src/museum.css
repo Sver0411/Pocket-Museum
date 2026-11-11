@@ -1081,6 +1081,11 @@ body {
   direction: rtl;
   cursor: ns-resize;
 }
+.slider-track {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
 .slider-thumb {
   position: absolute;
   top: 9%;
@@ -1097,6 +1102,32 @@ body {
   top: auto;
   width: 82%;
   height: 12%;
+}
+.hardware-slider.recessed {
+  background: none;
+  box-shadow: none;
+  outline: none;
+  overflow: visible;
+}
+.hardware-slider.recessed .slider-track {
+  inset: 0 auto 0 18%;
+  width: 24%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #064c58, #086a77);
+  box-shadow: inset 1px 0 2px #002e39b3, 1px 0 1px #86d8e080;
+}
+.console-space[data-art-view="angled"] .hardware-slider.recessed .slider-track {
+  transform: skewX(-9deg);
+}
+.hardware-slider.recessed .slider-thumb {
+  height: 20%;
+  border: 0;
+  background: linear-gradient(90deg, #207984, #74c5ce 45%, #3f97a4);
+  box-shadow: 0 1px 2px #002c36a8;
+}
+.hardware-slider.recessed:has(input:focus-visible) .slider-track {
+  outline: 2px solid #e6ffff;
+  outline-offset: 2px;
 }
 @media (max-width: 820px) {
   .play-view .console-space.portrait {

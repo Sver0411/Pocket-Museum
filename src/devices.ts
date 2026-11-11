@@ -380,10 +380,10 @@ deviceMutable("3ds").sliders = [
   {
     id: "volume",
     label: "掌机音量",
-    x: 45,
-    y: 726,
-    w: 24,
-    h: 120,
+    x: 60,
+    y: 732,
+    w: 60,
+    h: 100,
     vertical: true,
   },
 ];

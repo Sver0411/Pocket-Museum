@@ -635,6 +635,12 @@ button svg {
 .modal-backdrop {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
   background: #080910a8;
   backdrop-filter: blur(15px);
   display: flex;
@@ -642,6 +648,12 @@ button svg {
   justify-content: center;
   z-index: 50;
   padding: 22px;
+}
+.modal-backdrop:not([open]) {
+  display: none;
+}
+.modal-backdrop::backdrop {
+  background: transparent;
 }
 .help-modal,
 .library-modal {
@@ -1072,12 +1084,15 @@ button svg {
 @keyframes toast-in {
   from {
     opacity: 0;
-    bottom: 17px;
+    translate: 0 -5px;
   }
   to {
     opacity: 1;
-    bottom: 25px;
+    translate: 0 0;
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
 }
 @media (min-width: 1600px) {
   .studio-main {
@@ -1740,6 +1755,10 @@ button svg {
 .dpad-assembly.active .dpad-bearing {
   opacity: 1;
 }
+/* The GBA photo already includes the shadow around the rocker. */
+.console-space[data-device="gba"] .dpad-bearing {
+  display: none;
+}
 .dpad-cap {
   transform: translate3d(
       var(--dpad-shift-x),
@@ -1778,16 +1797,17 @@ button svg {
 }
 .lid,
 .closed .lid {
+  --lid-seat: calc(var(--fold) * var(--fold));
   transform-origin: 50% 100%;
   transform: translate3d(
-      calc(var(--fold) * var(--fold-x)),
-      calc(var(--fold) * var(--fold-y)),
+      calc(var(--lid-seat) * var(--fold-x)),
+      calc(var(--lid-seat) * var(--fold-y)),
       calc(2px * (1 - var(--fold)))
     )
     rotateX(calc(var(--fold) * -180deg))
     scale(
-      calc(1 + (var(--fold-sx) - 1) * var(--fold)),
-      calc(1 + (var(--fold-sy) - 1) * var(--fold))
+      calc(1 + (var(--fold-sx) - 1) * var(--lid-seat)),
+      calc(1 + (var(--fold-sy) - 1) * var(--lid-seat))
     );
   transition: none;
   z-index: 12;
@@ -1854,6 +1874,11 @@ button svg {
 .console-space[data-folding] .lcd,
 .closed .lcd {
   pointer-events: none;
+}
+.console-space[data-lid-sleep] .lcd > *,
+.console-space[data-folding] .lid-front > .hardware-slider,
+.console-space.closed:not([data-folding]) .lid-front {
+  visibility: hidden;
 }
 .hinge-occlusion {
   position: absolute;

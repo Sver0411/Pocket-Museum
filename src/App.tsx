@@ -1,4 +1,5 @@
 import { FocusControls } from "./components/FocusControls";
+import { HostDialog } from "./components/HostDialog";
 import { PpssppClient } from "./emulator/PpssppClient";
 import {
   DevicePresentation,
@@ -114,6 +115,7 @@ export default function App() {
   );
   const [toolsOpen, setToolsOpen] = useState(false);
   const [focusPlay, setFocusPlay] = useState(false);
+  const [fullScreen, setFullScreen] = useState(() => !!document.fullscreenElement);
   const [connectionOpen, setConnectionOpen] = useState(false),
     [externalVersion, setExternalVersion] = useState(""),
     [externalEndpoint, setExternalEndpoint] = useState(
@@ -214,13 +216,13 @@ export default function App() {
     closedRef = useRef(closed),
     foldResume = useRef<Status | null>(null),
     soundRef = useRef({ muted, volume }),
-    helpRef = useRef(help),
+    modalRef = useRef(false),
     focused = useRef(true);
   statusRef.current = status;
   gameRef.current = game;
   closedRef.current = closed;
   soundRef.current = { muted, volume };
-  helpRef.current = help;
+  modalRef.current = help || libraryOpen || connectionOpen;
   const notify = useCallback((message: string) => {
     setToast(message);
     clearTimeout(toastTimer.current);
@@ -235,7 +237,7 @@ export default function App() {
       !externalVersion &&
       ["running", "paused"].includes(status) &&
       (!DEVICE_ADAPTERS[deviceId] || !game || STANDALONE),
-    status !== "running" || closed || help || libraryOpen,
+    status !== "running" || closed || modalRef.current,
   );
   const nativeRef = useRef(native);
   nativeRef.current = native;
@@ -454,18 +456,24 @@ export default function App() {
   }, []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const button = KEY_MAP[e.code];
+      if (!button) return;
+      const source = `key:${e.code}`;
+      if (e.type === "keyup") {
+        input.set(source, button, false);
+        return;
+      }
       if (
         museumRef.current ||
         statusRef.current !== "running" ||
         closedRef.current ||
-        helpRef.current
+        modalRef.current ||
+        e.ctrlKey || e.altKey || e.metaKey
       )
         return;
       if (
         e.target instanceof HTMLElement &&
-        (e.target.closest(
-          "input,textarea,select,[role=dialog],.analog-stick",
-        ) ||
+        (e.target.closest("input,textarea,select,.analog-stick") ||
           e.target.isContentEditable)
       )
         return;
@@ -477,11 +485,8 @@ export default function App() {
         ["Enter", "Space"].includes(e.code)
       )
         return;
-      const button = KEY_MAP[e.code];
-      if (button) {
-        e.preventDefault();
-        if (!e.repeat) input.set(`key:${e.code}`, button, e.type === "keydown");
-      }
+      e.preventDefault();
+      if (!e.repeat) input.set(source, button, true);
     };
     const blur = () => {
       focused.current = false;
@@ -528,6 +533,11 @@ export default function App() {
       cancelAnimationFrame(raf);
     };
   }, [input, persistNative, report]);
+  useEffect(() => {
+    const changed = () => setFullScreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", changed);
+    return () => document.removeEventListener("fullscreenchange", changed);
+  }, []);
   useEffect(() => {
     if (!["running", "paused"].includes(status)) return;
     const timer = setInterval(() => {
@@ -891,7 +901,10 @@ export default function App() {
           e.target.closest("input,textarea,select,[contenteditable=true]"))
       )
         return;
-      if (e.code === "Escape" && focusPlay) {
+      if (e.code === "Escape" && toolsOpen) {
+        e.preventDefault();
+        setToolsOpen(false);
+      } else if (e.code === "Escape" && focusPlay) {
         e.preventDefault();
         input.releaseAll();
         setFocusPlay(false);
@@ -899,7 +912,7 @@ export default function App() {
     };
     window.addEventListener("keydown", shortcut);
     return () => window.removeEventListener("keydown", shortcut);
-  }, [inMuseum, help, libraryOpen, connectionOpen, focusPlay, input]);
+  }, [inMuseum, help, libraryOpen, connectionOpen, focusPlay, toolsOpen, input]);
   const adapter = DEVICE_ADAPTERS[deviceId];
   if (inMuseum) return <MuseumHome onSelect={switchDevice} />;
   const ready = ["running", "paused"].includes(status),
@@ -1285,8 +1298,10 @@ export default function App() {
             <details
               className="more-controls"
               onClick={(e) => {
-                if (e.target instanceof Element && e.target.closest("button,a"))
+                if (e.target instanceof Element && e.target.closest("button,a")) {
                   e.currentTarget.open = false;
+                  e.currentTarget.querySelector("summary")?.focus();
+                }
               }}
             >
               <summary>更多</summary>
@@ -1294,18 +1309,19 @@ export default function App() {
                 <button
                   className="setting-row"
                   onClick={() => {
-                    if (document.fullscreenElement) {
-                      void document.exitFullscreen().catch(report);
-                    } else
-                      void document.documentElement
-                        .requestFullscreen()
-                        .catch(report);
+                    const request = document.fullscreenElement
+                      ? document.exitFullscreen?.()
+                      : document.fullscreenEnabled
+                        ? document.documentElement.requestFullscreen?.()
+                        : undefined;
+                    if (request) void request.catch(report);
+                    else notify("当前浏览器无法切换全屏");
                   }}
-                  aria-label="全屏"
+                  aria-pressed={fullScreen}
                 >
                   <span>
-                    <Maximize2 size={20} />
-                    全屏
+                    {fullScreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                    {fullScreen ? "退出全屏" : "全屏"}
                   </span>
                   <ChevronRight size={15} />
                 </button>
@@ -1483,17 +1499,8 @@ export default function App() {
         </span>
       </div>
       {connectionOpen && (
-        <div
-          className="modal-backdrop"
-          onClick={() => setConnectionOpen(false)}
-        >
-          <section
-            className="connection-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="连接模拟器"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <HostDialog label="连接模拟器" onDismiss={() => setConnectionOpen(false)}>
+          <section className="connection-modal">
             <button
               className="modal-close"
               aria-label="关闭连接面板"
@@ -1603,7 +1610,7 @@ export default function App() {
               尚无已适配的外部连接接口。
             </p>
           </section>
-        </div>
+        </HostDialog>
       )}
       {error && !connectionOpen && (
         <div className="error-banner" role="alert">
@@ -1622,22 +1629,12 @@ export default function App() {
         </div>
       )}
       {libraryOpen && (
-        <div className="modal-backdrop" onClick={() => setLibraryOpen(false)}>
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-label="选择卡带"
-            className="library-modal"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.code === "Escape") setLibraryOpen(false);
-            }}
-          >
+        <HostDialog label="选择卡带" onDismiss={() => setLibraryOpen(false)}>
+          <section className="library-modal">
             <button
               className="modal-close"
               onClick={() => setLibraryOpen(false)}
               aria-label="关闭卡带库"
-              autoFocus
             >
               <X size={20} />
             </button>
@@ -1783,25 +1780,14 @@ export default function App() {
               游戏来源与开源许可 ↗
             </a>
           </section>
-        </div>
+        </HostDialog>
       )}
       {help && (
-        <div className="modal-backdrop" onClick={() => setHelp(false)}>
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-label="Pocket Museum 使用指南"
-            className="help-modal"
-            tabIndex={-1}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.code === "Escape") setHelp(false);
-            }}
-          >
+        <HostDialog label="Pocket Museum 使用指南" onDismiss={() => setHelp(false)}>
+          <section className="help-modal">
             <button
               className="modal-close"
               onClick={() => setHelp(false)}
-              autoFocus
               aria-label="关闭使用指南"
             >
               <X size={20} />
@@ -1848,7 +1834,7 @@ export default function App() {
               </a>
             )}
           </section>
-        </div>
+        </HostDialog>
       )}
     </div>
   );

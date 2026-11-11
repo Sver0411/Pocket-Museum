@@ -2297,22 +2297,22 @@
 .three-grid-viewport {
   position: absolute;
   left: 0;
-  top: 122px;
+  top: 110px;
   width: 320px;
-  height: 72px;
-  padding: 0 42px;
+  height: 93px;
+  padding: 12px 42px 9px;
   overflow: hidden;
   box-sizing: border-box;
 }
 .three-grid-viewport.rows-2 {
-  top: 44px;
-  height: 154px;
-  padding: 0 42px;
+  top: 34px;
+  height: 176px;
+  padding: 10px 42px 12px;
 }
 .three-grid-viewport.rows-3 {
-  top: 40px;
-  height: 160px;
-  padding: 0 22px;
+  top: 34px;
+  height: 176px;
+  padding: 6px 22px 10px;
 }
 .three-icon-grid {
   height: 100%;
@@ -2347,6 +2347,7 @@
 .three-tile[data-app-id="health"] .system-icon,
 .three-tile[data-app-id="card"] .system-icon,
 .three-tile[data-app-id="mii"] .system-icon,
+.three-tile[data-app-id="activity"] .system-icon,
 .three-tile[data-app-id="settings"] .system-icon {
   background: linear-gradient(#fff, #dbe2dd);
   box-shadow: inset 0 0 3px #b5cdca;
@@ -2359,7 +2360,20 @@
   color: #6cbd91;
 }
 .three-tile[data-app-id="settings"] .system-icon {
-  color: #3e6f65;
+  color: #3f6651;
+  background: linear-gradient(#fbf9dc, #c4cf9c);
+}
+.three-tile[data-app-id="activity"] .system-icon {
+  color: #34a87e;
+}
+.three-tile[data-empty-slot="true"] {
+  background: linear-gradient(#bccac0, #e5eee2) !important;
+  border-color: #c9d5c9 !important;
+  box-shadow: inset 0 2px 5px #657e7466, 0 1px 1px #fffc !important;
+}
+.three-tile[data-empty-slot="true"] .system-icon {
+  background: #d7e0d5;
+  box-shadow: inset 0 1px 3px #748a8177;
 }
 .three-tile svg,
 .rows-2 .three-tile svg {
@@ -2699,6 +2713,156 @@
   height: 240px;
   object-fit: contain;
 }
+.three-wordmark {
+  inset: 41px 33px 24px;
+  width: auto;
+  height: auto;
+  flex-direction: row;
+  gap: 9px;
+  text-align: right;
+  text-shadow: 0 1px 0 #fff9, 0 2px 4px #776d5f2d;
+}
+.three-wordmark > div {
+  display: grid;
+  line-height: 1;
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+.three-wordmark strong {
+  font-size: 38px;
+  letter-spacing: -1.4px;
+}
+.wordmark-camera { color: #f1800b; }
+.wordmark-sound { color: #328bc6; }
+.three-camera-brand { position: relative; display: grid; place-items: end; width: 62px; height: 73px; }
+.three-camera-brand svg + svg { position: absolute; right: -5px; top: 0; }
+.three-wordmark.three-static-mark > strong {
+  font-size: 24px;
+  color: #4d6265;
+  max-width: 226px;
+  text-align: center;
+}
+.three-suspended-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  background: #14213d76;
+}
+.three-suspended {
+  width: 328px;
+  height: 167px;
+  display: grid;
+  grid-template-rows: 25px 1fr 28px 25px;
+  align-items: center;
+  justify-items: center;
+  color: #fff;
+  text-shadow: 0 1px 1px #142337;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(#b8d8f4ad, #223b5cae);
+  border: 1px solid #d9ebffd6;
+  box-shadow: 0 3px 11px #09152381;
+}
+.three-suspended header, .three-suspended footer {
+  align-self: stretch;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  background: #0d1e3690;
+  font-size: 12px;
+}
+.three-suspended strong { font-size: 15px; }
+.three-manual-top, .three-manual {
+  position: absolute;
+  inset: 0;
+  color: #364536;
+  background: repeating-linear-gradient(#f7f9f3 0 1px, #f0f3ec 1px 2px);
+}
+.three-manual-top {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  background: radial-gradient(ellipse at 50% 40%, #fcfef8, #c6d7bb);
+}
+.three-manual-top > svg { color: #608a48; filter: drop-shadow(0 2px 2px #4c71354a); }
+.three-manual-top h2, .three-manual-top p { margin: 0; }
+.three-manual { display: grid; grid-template-rows: 25px 1fr auto 24px; font-size: 13px; }
+.three-manual header {
+  display: grid;
+  place-items: center;
+  border-bottom: 1px solid #aeb9ac;
+  background: linear-gradient(#fff, #d6ded1);
+  font-weight: 700;
+}
+.three-manual-content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: 5px 7px;
+  scrollbar-width: thin;
+}
+.three-manual-content > button, .three-manual-group {
+  display: block;
+  width: 100%;
+  min-height: 27px;
+  margin: 3px 0;
+  padding: 3px 7px;
+  text-align: left;
+  border: 1px solid #a9baa3;
+  border-radius: 5px;
+  background: linear-gradient(#fff, #eaf1e6);
+  color: #344b38;
+}
+.three-manual-content > button.current { outline: 2px solid #51c678; outline-offset: -2px; }
+.three-manual-content i {
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  margin-right: 3px;
+  border-radius: 3px;
+  background: #6ab38d;
+  color: white;
+  font-size: 11px;
+  font-style: normal;
+}
+.three-manual-content > button:first-child i { background: #da7463; }
+.three-manual-group { min-height: 21px; background: #cce58e; font-weight: 700; font-size: 11px; }
+.three-manual article { padding: 0 7px; line-height: 1.42; }
+.three-manual article > p { margin: 5px 0 10px; }
+.three-manual.large article { font-size: 16px; }
+.three-manual-pages, .three-manual footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+.three-manual-pages { height: 22px; padding: 0 7px; background: #e2ebdc; border-top: 1px solid #bdcbb7; }
+.three-manual-pages button { padding: 1px 6px; background: #f8fbf6; color: #394b3b; border: 1px solid #acb9a7; border-radius: 3px; }
+.three-manual-pages button:disabled { opacity: .4; }
+.three-manual footer { grid-row: 4; background: linear-gradient(#67736e, #343d43); color: #fff; }
+.three-manual footer button, .three-manual footer span { flex: 1; text-align: center; padding: 2px 3px; }
+.three-manual footer button { align-self: stretch; border: 0; background: transparent; color: inherit; font-weight: 700; }
+.three-manual footer button:hover { background: #fff3; }
+.psp-options-shade { position: absolute; inset: 0; z-index: 6; background: #0819254f; }
+.psp-options {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 188px;
+  display: grid;
+  grid-template-rows: 42px 31px 1fr;
+  padding: 0 12px;
+  color: #fff;
+  background: linear-gradient(90deg, #38454cdb, #0b131bd9);
+  border-left: 1px solid #c3dae47e;
+  box-shadow: -3px 0 11px #03101777;
+  font-size: 13px;
+  text-shadow: 0 1px 1px #10171f;
+}
+.psp-options header { align-self: center; font-size: 11px; color: #d2dde3; }
+.psp-options button { border: 1px solid #b1d6e1; border-radius: 3px; color: inherit; background: linear-gradient(#879ea6a8, #465a65af); text-align: left; padding: 0 7px; }
+.psp-options footer { align-self: end; padding-bottom: 8px; font-size: 10px; }
+.vita-home, .vita-live { touch-action: none; user-select: none; }
 .system-resource-icon {
   display: block;
   width: 100%;

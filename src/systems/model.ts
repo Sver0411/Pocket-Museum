@@ -1,6 +1,7 @@
 import { commitPreference, editValue } from "./settingsBehavior";
 import type { DeviceId } from "../devices";
 import type { Button } from "../emulator/protocol";
+import { manualTopics } from "./threeManualContent";
 export interface AppIcon {
   id: string;
   name: string;
@@ -25,8 +26,8 @@ export const APPS_3DS: AppIcon[] = [
     color: "#5aad2d",
   },
   { id: "ar", name: "AR Games", icon: "ar", color: "#e9b321" },
-  { id: "face", name: "Face Raiders", icon: "face", color: "#ce7436" },
-  { id: "activity", name: "Activity Log", icon: "chart", color: "#ef7437" },
+  { id: "face", name: "Face Raiders", icon: "face", color: "#1776ac" },
+  { id: "activity", name: "Activity Log", icon: "chart", color: "#42ad83" },
   { id: "download", name: "Download Play", icon: "download", color: "#ed8b30" },
   { id: "shop", name: "eShop", icon: "bag", color: "#ed9f17" },
   {
@@ -36,6 +37,21 @@ export const APPS_3DS: AppIcon[] = [
     color: "#777f88",
   },
 ];
+const THREE_HOME_SLOTS = [
+  ...APPS_3DS,
+  ...Array.from({ length: 6 }, (_, i) => ({
+    id: `empty-${i}`,
+    name: "Empty slot",
+    icon: "empty",
+    color: "#a2afa8",
+  })),
+];
+const THREE_APPLETS = new Set(["notes", "friends", "notifications", "browser"]);
+export const THREE_DEFAULT_BRIGHTNESS = 5;
+
+export function isThreeEmpty(id: string) {
+  return id.startsWith("empty-");
+}
 export const APPS_VITA: AppIcon[] = [
   { id: "welcome", name: "Welcome Park", icon: "welcome", color: "#e9a327" },
   { id: "party", name: "Party", icon: "people", color: "#915ad8" },
@@ -107,7 +123,7 @@ export const XMB = [
   },
 ];
 export function orderedApps(s: NativeState) {
-  const list = s.device === "vita" ? APPS_VITA : APPS_3DS,
+  const list = s.device === "vita" ? APPS_VITA : THREE_HOME_SLOTS,
     key = s.device === "vita" ? "vita-order" : "three-order";
   try {
     const order = JSON.parse(s.prefs[key] || "[]") as string[];
@@ -583,6 +599,10 @@ export interface NativeState {
   shutdown: boolean;
   suspended: string;
   pending: string;
+  threeHomeIndex: number;
+  threeResumeView: Pick<NativeState, "section" | "selection" | "editor" | "draft"> | null;
+  threeManual: { app: string; homeIndex: number; topic: number; large: boolean } | null;
+  pspOptions: boolean;
   messages: import("./wireless").ChatMessage[];
 }
 export type NativeAction =
@@ -601,6 +621,12 @@ export type NativeAction =
   | { type: "back" }
   | { type: "start" }
   | { type: "page"; delta: number }
+  | { type: "vita-shift"; delta: -1 | 1 }
+  | { type: "manual-open"; app: string }
+  | { type: "manual-topic"; index: number }
+  | { type: "manual-size" }
+  | { type: "psp-options" }
+  | { type: "psp-information" }
   | { type: "set"; key: string; value: string }
   | { type: "hydrate"; prefs: Record<string, string> }
   | { type: "dialog"; text: string; pending?: string }
@@ -631,6 +657,10 @@ export function initialSystem(
     shutdown: false,
     suspended: "",
     pending: "",
+    threeHomeIndex: 0,
+    threeResumeView: null,
+    threeManual: null,
+    pspOptions: false,
     messages: [],
   };
 }
@@ -655,7 +685,12 @@ export function settingValue(s: NativeState, item: Setting) {
   return s.prefs[item.key] ?? item.values[0];
 }
 export function systemBack(s: NativeState): NativeState {
-  if (s.dialog) return { ...s, dialog: "" };
+  if (s.dialog) return { ...s, dialog: "", pending: "" };
+  if (s.pspOptions) return { ...s, pspOptions: false };
+  if (s.threeManual)
+    return s.threeManual.topic < 0
+      ? closeThreeManual(s)
+      : { ...s, selection: s.threeManual.topic, threeManual: { ...s.threeManual, topic: -1 } };
   if (s.editor) return { ...s, editor: "", draft: "" };
   if (s.device === "psp" && s.phase === "app")
     return {
@@ -677,20 +712,36 @@ export function systemBack(s: NativeState): NativeState {
     return { ...s, phase: "home", selection: 0 };
   if (s.device === "ds" && s.app === "settings")
     return { ...s, dialog: "The system will now shut down.\nOK?" };
+  if (s.device === "3ds" && s.phase === "app") return returnThreeHome(s);
   return { ...s, phase: "home", app: "", section: "", selection: 0 };
 }
+
+function returnThreeHome(s: NativeState): NativeState {
+  return {
+    ...s, phase: "home", app: "", section: "", dialog: "", editor: "", draft: "",
+    selection: s.threeHomeIndex,
+  };
+}
+
+function resumeThreeSoftware(s: NativeState): NativeState {
+  return {
+    ...s, ...s.threeResumeView, phase: "app", app: s.suspended,
+    suspended: "", threeResumeView: null, dialog: "",
+  };
+}
+
+function closeThreeManual(s: NativeState): NativeState {
+  return { ...s, phase: "home", app: "", threeManual: null, selection: s.threeManual?.homeIndex ?? 0, dialog: "" };
+}
+
 function open(s: NativeState, app: string): NativeState {
+  if (!app) return s;
   if (["gb", "gba", "sp"].includes(s.device)) return s;
-  if (app === "card")
-    return {
-      ...s,
-      dialog:
-        s.device === "3ds"
-          ? "There is nothing inserted into the Game Card slot."
-          : "There is no DS Card inserted.",
-    };
+  if (s.device === "3ds" && isThreeEmpty(app)) return s;
+  if (app === "card") return s.device === "3ds" ? s : { ...s, dialog: "There is no DS Card inserted." };
   if (app === "gba") return { ...s, dialog: "There is no Game Pak inserted." };
-  if (s.device === "3ds" && s.suspended && app !== s.suspended)
+  if (s.device === "3ds" && app === s.suspended) return resumeThreeSoftware(s);
+  if (s.device === "3ds" && s.suspended && app !== s.suspended && !THREE_APPLETS.has(app))
     return {
       ...s,
       pending: app,
@@ -703,6 +754,7 @@ function open(s: NativeState, app: string): NativeState {
     phase: live ? "live" : "app",
     section: "",
     selection: 0,
+    threeHomeIndex: s.device === "3ds" && s.phase === "home" ? s.selection : s.threeHomeIndex,
     dialog: "",
     open: live
       ? s.open.includes(app)
@@ -713,6 +765,43 @@ function open(s: NativeState, app: string): NativeState {
 }
 export function systemReducer(s: NativeState, a: NativeAction): NativeState {
   switch (a.type) {
+    case "manual-open":
+      if (s.device !== "3ds" || s.phase !== "home" || !manualTopics[a.app]) return s;
+      return {
+        ...s, app: "manual", phase: "app", selection: 0, dialog: "",
+        threeManual: { app: a.app, homeIndex: s.selection, topic: -1, large: false },
+      };
+    case "manual-topic": {
+      if (!s.threeManual) return s;
+      const last = manualTopics[s.threeManual.app].length - 1;
+      const topic = Math.max(0, Math.min(last, a.index));
+      return { ...s, selection: topic, threeManual: { ...s.threeManual, topic } };
+    }
+    case "manual-size":
+      return s.threeManual ? { ...s, threeManual: { ...s.threeManual, large: !s.threeManual.large } } : s;
+    case "vita-shift": {
+      if (s.device !== "vita" || (s.phase !== "live" && s.phase !== "home")) return s;
+      const index = s.phase === "live" ? s.open.indexOf(s.app) : -1;
+      const next = index + a.delta;
+      if (next < -1 || next >= s.open.length) return s;
+      return next < 0
+        ? { ...s, phase: "home", app: "", selection: 0, section: "" }
+        : { ...s, phase: "live", app: s.open[next], selection: next, section: "" };
+    }
+    case "psp-options": {
+      const item = XMB[s.category]?.items[s.selection];
+      return s.device === "psp" && s.phase === "home" && ["Memory Stick™", "UMD™", "Saved Data Utility"].includes(item)
+        ? { ...s, pspOptions: !s.pspOptions }
+        : s;
+    }
+    case "psp-information": {
+      if (!s.pspOptions) return s;
+      const item = XMB[s.category].items[s.selection];
+      return {
+        ...s, pspOptions: false,
+        dialog: `${item}\n${item === "Memory Stick™" ? "Media is stored in the browser library." : item === "UMD™" ? "There is no UMD™ inserted." : "There are no saved data."}`,
+      };
+    }
     case "edit": {
       const item = activeSettings(s).find((e) => e.key === a.key);
       if (!item) return s;
@@ -827,7 +916,7 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
     case "dialog":
       return { ...s, dialog: a.text, pending: a.pending || "" };
     case "dismiss":
-      return { ...s, dialog: "" };
+      return { ...s, dialog: "", pending: "" };
     case "set":
       return { ...s, prefs: { ...s.prefs, [a.key]: a.value } };
     case "back":
@@ -854,6 +943,7 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
       return {
         ...s,
         suspended: "",
+        threeResumeView: null,
         pending: "",
         open: s.open.filter((x) => x !== a.app),
         started: s.started.filter((x) => x !== a.app),
@@ -882,6 +972,7 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
         : { ...s, messages: [...s.messages, a.message].slice(-40) };
     case "home":
       if (s.phase === "off" || s.phase === "boot") return s;
+      if (s.threeManual) return closeThreeManual(s);
       if (s.device === "vita")
         return {
           ...s,
@@ -899,27 +990,17 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
       if (s.device === "3ds") {
         if (s.phase === "app") {
           if (s.app === "settings") return s;
+          if (THREE_APPLETS.has(s.app)) return returnThreeHome(s);
+          const tile = orderedApps(s).findIndex((item) => item.id === s.app);
           return {
-            ...s,
-            phase: "home",
+            ...returnThreeHome(s),
             suspended: s.app,
-            app: "",
-            selection: Math.max(
-              0,
-              orderedApps(s).findIndex((a) => a.id === s.app),
-            ),
-            section: "",
-            dialog: "",
+            threeResumeView: { section: s.section, selection: s.selection, editor: s.editor, draft: s.draft },
+            selection: tile < 0 ? s.threeHomeIndex : tile,
           };
         }
         if (s.phase === "home" && s.suspended)
-          return {
-            ...s,
-            phase: "app",
-            app: s.suspended,
-            suspended: "",
-            dialog: "",
-          };
+          return resumeThreeSoftware(s);
       }
       return {
         ...s,
@@ -927,6 +1008,7 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
         app: "",
         section: "",
         dialog: "",
+        pspOptions: false,
         selection: 0,
       };
     case "button": {
@@ -935,6 +1017,11 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
       if (s.phase === "health") return b === "A" ? { ...s, phase: "home" } : s;
       if (s.phase === "lock") return b === "A" ? { ...s, phase: "home" } : s;
       if (s.dialog) {
+        if (s.device === "3ds" && s.dialog === "Screen Brightness" && (b === "Left" || b === "Right")) {
+          const brightness = Number(s.prefs.brightness) || THREE_DEFAULT_BRIGHTNESS;
+          const next = Math.max(1, Math.min(5, brightness + (b === "Right" ? 1 : -1)));
+          return systemReducer(s, { type: "set", key: "brightness", value: String(next) });
+        }
         if (b === "A" && s.pending.startsWith("setting:"))
           return {
             ...s,
@@ -972,7 +1059,7 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
           };
         if (b === "A" && s.pending)
           return open(
-            { ...s, suspended: "", pending: "", dialog: "" },
+            { ...s, suspended: "", threeResumeView: null, pending: "", dialog: "" },
             s.pending,
           );
         if (b === "B") return { ...s, dialog: "", pending: "" };
@@ -1002,9 +1089,27 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
         }
         return s;
       }
+      if (s.pspOptions) {
+        if (b === "A") return systemReducer(s, { type: "psp-information" });
+        if (b === "B" || b === "X") return { ...s, pspOptions: false };
+        return s;
+      }
       if (b === "B") return systemBack(s);
+      if (s.threeManual) {
+        if (b === "Y") return systemReducer(s, { type: "manual-size" });
+        const { app, topic } = s.threeManual;
+        if (topic < 0) {
+          if (b === "A") return systemReducer(s, { type: "manual-topic", index: s.selection });
+          if (b === "Up" || b === "Down")
+            return { ...s, selection: Math.max(0, Math.min(manualTopics[app].length - 1, s.selection + (b === "Down" ? 1 : -1))) };
+        } else if (b === "Left" || b === "Right" || b === "L" || b === "R") {
+          return systemReducer(s, { type: "manual-topic", index: topic + (b === "Right" || b === "R" ? 1 : -1) });
+        }
+        return s;
+      }
       if (s.phase === "live")
-        return b === "A" ? systemReducer(s, { type: "start" }) : s;
+        return b === "A" ? systemReducer(s, { type: "start" })
+          : b === "L" || b === "R" ? systemReducer(s, { type: "vita-shift", delta: b === "R" ? 1 : -1 }) : s;
       if (s.phase === "index")
         return b === "A" && s.open.length
           ? { ...s, phase: "live", app: s.open[s.selection % s.open.length] }
@@ -1022,6 +1127,7 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
             : s;
       if (s.phase === "home") {
         if (s.device === "psp") {
+          if (b === "X") return systemReducer(s, { type: "psp-options" });
           if (b === "Left" || b === "Right")
             return systemReducer(s, {
               type: "category",
@@ -1060,16 +1166,15 @@ export function systemReducer(s: NativeState, a: NativeAction): NativeState {
                     .map((x) => x.id);
           if (["Up", "Down", "Left", "Right"].includes(b)) {
             const rows = Number(s.prefs.rows || 1);
+            if (s.device === "3ds") {
+              const row = s.selection % rows;
+              const step = b === "Right" ? rows : b === "Left" ? -rows
+                : b === "Down" && row + 1 < rows ? 1 : b === "Up" && row > 0 ? -1 : 0;
+              const selection = s.selection + step;
+              return selection >= 0 && selection < names.length ? { ...s, selection } : s;
+            }
             const step =
-              s.device === "3ds"
-                ? b === "Right"
-                  ? rows
-                  : b === "Left"
-                    ? -rows
-                    : b === "Down"
-                      ? 1
-                      : -1
-                : b === "Right"
+              b === "Right"
                   ? 1
                   : b === "Left"
                     ? -1

@@ -2,30 +2,33 @@ import type { CSSProperties } from "react";
 export function HardwareSlider({
   label,
   vertical,
+  recessed = false,
   value,
   onChange,
   style,
 }: {
   label: string;
   vertical?: boolean;
+  recessed?: boolean;
   value: number;
   onChange: (n: number) => void;
   style: CSSProperties;
 }) {
   return (
     <label
-      className={`hardware-slider ${vertical ? "vertical" : ""}`}
+      className={`hardware-slider ${vertical ? "vertical" : ""} ${recessed ? "recessed" : ""}`}
       style={style}
       title={label}
     >
-      <span className="slider-track" />
-      <span
-        className="slider-thumb"
-        style={{
-          [vertical ? "bottom" : "left"]:
-            `${Math.min(90, Math.max(0, value * 0.9))}%`,
-        }}
-      />
+      <span className="slider-track" aria-hidden="true">
+        <span
+          className="slider-thumb"
+          style={{
+            [vertical ? "bottom" : "left"]:
+              `${Math.min(100, Math.max(0, value)) * (recessed ? 0.8 : 0.9)}%`,
+          }}
+        />
+      </span>
       <input
         aria-label={label}
         type="range"

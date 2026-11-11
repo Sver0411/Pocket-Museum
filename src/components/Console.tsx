@@ -1,6 +1,6 @@
 import { focusDevice } from "./focusDevice";
 import { DsGameScreen } from "./DsGameScreen";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { projectiveMatrix, scaledQuad } from "./projection";
 import { presentationDevice } from "../flatDevices";
 import type { Quad } from "./projection";
@@ -96,17 +96,27 @@ export function Console({
     start: number;
     travel: number;
   } | null>(null);
-  const mounted = useRef(false);
-  useEffect(() => {
-    if (!mounted.current) {
-      mounted.current = true;
+  const previousClosed = useRef(closed);
+  const settleTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const settleLid = () => {
+    clearTimeout(settleTimer.current);
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setMoving(false);
       return;
     }
     setMoving(true);
-    const t = setTimeout(() => setMoving(false), 820);
-    return () => clearTimeout(t);
+    settleTimer.current = setTimeout(() => setMoving(false), 820);
+  };
+  useLayoutEffect(() => {
+    if (previousClosed.current === closed) return;
+    previousClosed.current = closed;
+    settleLid();
   }, [closed]);
+  useEffect(() => () => clearTimeout(settleTimer.current), []);
   const progress = drag ?? Number(closed);
+  const folding = moving || drag !== null;
+  const dragProgress = (g: NonNullable<typeof gesture.current>, y: number) =>
+    Math.max(0, Math.min(1, g.start + (y - g.y) / g.travel));
   const finishDrag = (
     e: React.PointerEvent<HTMLButtonElement>,
     cancel = false,
@@ -114,7 +124,8 @@ export function Console({
     const g = gesture.current;
     if (!g || g.id !== e.pointerId) return;
     gesture.current = null;
-    const desired = cancel ? closed : (drag ?? g.start) > 0.5;
+    const desired = cancel ? closed : dragProgress(g, e.clientY) > 0.5;
+    if (drag !== null && drag !== Number(closed)) settleLid();
     setDrag(null);
     if (desired !== closed) onFold();
   };
@@ -129,7 +140,7 @@ export function Console({
     return (
       <div
         key={index}
-        inert={lid && ["ds", "3ds"].includes(d.id)}
+        inert={folding || closed || (lid && ["ds", "3ds"].includes(d.id))}
         className={`lcd ${light ? "" : "dim"} ${powered ? "screen-powered" : ""}`}
         style={{
           ...percentRect(
@@ -196,7 +207,7 @@ export function Console({
             <span>正在启动 {d.id === "ds" ? "DeSmuME" : "mGBA"}…</span>
           </div>
         )}
-        {status === "paused" && !closed && (
+        {status === "paused" && !closed && !folding && (
           <div className="screen-overlay paused">
             <Pause size={20} />
             <span>已暂停</span>
@@ -221,7 +232,8 @@ export function Console({
       data-focus={focus || undefined}
       data-posture={closed ? "closed" : isFlat ? "flat" : "angled"}
       data-art-view={d.view ?? "angled"}
-      data-folding={moving || drag !== null || undefined}
+      data-folding={folding || undefined}
+      data-lid-sleep={(d.sleepOnClose && (closed || moving)) || undefined}
       style={
         {
           "--fold": progress,
@@ -309,26 +321,20 @@ export function Console({
                 e.preventDefault();
                 onLidMotion();
                 e.currentTarget.setPointerCapture(e.pointerId);
-                const rect = e.currentTarget
-                  .closest(".console-space")!
-                  .getBoundingClientRect();
+                const console = stage.current!;
+                const rect = console.getBoundingClientRect();
+                const start = Number(getComputedStyle(console).getPropertyValue("--fold"));
                 gesture.current = {
                   id: e.pointerId,
                   y: e.clientY,
-                  start: Number(closed),
+                  start,
                   travel: rect.height * 0.3,
                 };
-                setDrag(Number(closed));
+                setDrag(start);
               }}
               onPointerMove={(e) => {
                 const g = gesture.current;
-                if (g?.id === e.pointerId)
-                  setDrag(
-                    Math.max(
-                      0,
-                      Math.min(1, g.start + (e.clientY - g.y) / g.travel),
-                    ),
-                  );
+                if (g?.id === e.pointerId) setDrag(dragProgress(g, e.clientY));
               }}
               onPointerUp={(e) => {
                 const g = gesture.current;
@@ -471,6 +477,7 @@ export function Console({
                 key={k.id}
                 label={k.label}
                 vertical={k.vertical}
+                recessed={d.id === "3ds" && k.id === "volume"}
                 value={hardwareValues[k.id] ?? 60}
                 onChange={(v) => onHardwareValue(k.id, v)}
                 style={percentRect(k, d.width, d.height)}

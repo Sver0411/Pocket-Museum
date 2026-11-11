@@ -6,43 +6,43 @@
       "id": "gb",
       "name": "Game Boy",
       "file": "gb.html",
-      "bytes": 7909875
+      "bytes": 7936501
     },
     {
       "id": "gba",
       "name": "Game Boy Advance",
       "file": "gba.html",
-      "bytes": 8606651
+      "bytes": 8633277
     },
     {
       "id": "sp",
       "name": "Game Boy Advance SP",
       "file": "sp.html",
-      "bytes": 10820159
+      "bytes": 10846785
     },
     {
       "id": "ds",
       "name": "Nintendo DS Lite",
       "file": "ds.html",
-      "bytes": 10432779
+      "bytes": 10459405
     },
     {
       "id": "3ds",
       "name": "Nintendo 3DS",
       "file": "3ds.html",
-      "bytes": 11311074
+      "bytes": 11337700
     },
     {
       "id": "psp",
       "name": "PlayStation Portable",
       "file": "psp.html",
-      "bytes": 8038735
+      "bytes": 8065361
     },
     {
       "id": "vita",
       "name": "PlayStation Vita",
       "file": "vita.html",
-      "bytes": 7913507
+      "bytes": 7940133
     }
   ]
 }

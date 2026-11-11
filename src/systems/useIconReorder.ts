@@ -56,9 +56,8 @@ export function useIconReorder(
     dragging,
     bind: {
       onPointerDown: (e: PointerEvent<HTMLDivElement>) => {
-        const id = (e.target as HTMLElement).closest<HTMLElement>(
-          "[data-app-id]",
-        )?.dataset.appId;
+        const tile = (e.target as HTMLElement).closest<HTMLElement>("[data-app-id]");
+        const id = tile?.dataset.appId;
         if (!id || e.button !== 0) return;
         cancel();
         suppress.current = false;
@@ -70,6 +69,7 @@ export function useIconReorder(
           y: e.clientY,
           active: false,
           timer: setTimeout(() => {
+            if (tile?.dataset.emptySlot === "true") return;
             g.active = true;
             setDragging(id);
             target.setPointerCapture(g.id);

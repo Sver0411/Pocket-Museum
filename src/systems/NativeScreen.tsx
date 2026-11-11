@@ -48,8 +48,10 @@ import type { NativeAction, NativeState, AppIcon, Setting } from "./model";
 import {
   APPS_3DS,
   APPS_VITA,
+  THREE_DEFAULT_BRIGHTNESS,
   XMB,
   activeSettings,
+  isThreeEmpty,
   settingGroupNames,
   settingValue,
   orderedApps,
@@ -57,6 +59,9 @@ import {
 import { clockDate, displayedTime, inputKind } from "./settingsBehavior";
 import { useIconReorder } from "./useIconReorder";
 import { NativeAppIcon } from "./NativeAppIcon";
+import { ThreeSoftwareBanner } from "./ThreeSoftwareBanner";
+import { ThreeManual } from "./ThreeManual";
+import { manualTopics } from "./threeManualContent";
 import { PspWave } from "./PspWave";
 import { Icon as XmbIcon } from "../third-party/xmdb/Icons";
 import { PictoChat } from "./PictoChat";
@@ -150,6 +155,7 @@ function IconTile({
       onClick={onClick}
       aria-label={app.name}
       data-app-id={app.id}
+      data-empty-slot={!bubble && isThreeEmpty(app.id) ? "true" : undefined}
     >
       <span className="system-icon">
         {resources?.icons[app.id] ? (
@@ -160,7 +166,7 @@ function IconTile({
           />
         ) : bubble ? (
           <VitaGlyph name={app.id} />
-        ) : [
+        ) : isThreeEmpty(app.id) ? null : [
             "health",
             "camera",
             "sound",
@@ -171,6 +177,8 @@ function IconTile({
             "people",
             "chart",
             "download",
+            "face",
+            "bag",
           ].includes(app.icon) ? (
           <NativeAppIcon name={app.icon} size={32} />
         ) : (
@@ -769,7 +777,11 @@ function ThreeScreen({
   const time = useTime(s.prefs);
   const top = screen === 0;
   const app = apps[s.selection] || apps[0];
-  const selected = s.app ? APPS_3DS.find((a) => a.id === s.app) : app;
+  const suspendedApp = APPS_3DS.find((item) => item.id === s.suspended);
+  const empty = isThreeEmpty(app.id);
+  const noSoftware = empty || app.id === "card";
+  if (s.threeManual)
+    return <ThreeManual manual={s.threeManual} top={top} selection={s.selection} dispatch={dispatch} />;
   if (s.phase === "app") {
     if (s.app === "settings")
       return top ? (
@@ -811,13 +823,13 @@ function ThreeScreen({
             <i />
           </span>
         </div>
-        {resources?.banners[selected?.id ?? "card"] ? (
+        {resources?.banners[app.id] ? (
           <img
             className="three-resource-banner"
-            src={resources.banners[selected?.id ?? "card"]}
+            src={resources.banners[app.id]}
             alt=""
           />
-        ) : selected?.id === "card" ? (
+        ) : noSoftware ? (
           <div className="three-home-applets">
             {[
               ["browser", 94],
@@ -831,17 +843,7 @@ function ThreeScreen({
               </span>
             ))}
           </div>
-        ) : (
-          <div className="three-showcase">
-            <div
-              className="three-software-banner"
-              style={{ color: selected?.color }}
-            >
-              <NativeAppIcon name={selected?.icon ?? "card"} size={90} />
-              <strong>{selected?.name}</strong>
-            </div>
-          </div>
-        )}
+        ) : <ThreeSoftwareBanner app={app} />}
         <div className="three-camera-hint">
           <span>
             L <Camera size={14} />
@@ -850,14 +852,23 @@ function ThreeScreen({
             <Camera size={14} /> R
           </span>
         </div>
+        {s.suspended && (
+          <div className="three-suspended-shade">
+            <div className="three-suspended">
+              <header>Suspended software</header>
+              <NativeAppIcon name={suspendedApp?.icon ?? "card"} size={49} />
+              <strong>{suspendedApp?.name ?? "Software"}</strong>
+              <footer>⌂ HOME　Resume suspended software</footer>
+            </div>
+          </div>
+        )}
       </div>
     );
   const rows = +(s.prefs.rows || "1"),
-    cols = Math.ceil(APPS_3DS.length / rows);
-  const offset = rows === 1 ? Math.max(0, s.selection - 1) : 0;
+    cols = Math.ceil(apps.length / rows);
   return (
     <div
-      className={`three-home-bottom layout-${rows} ${app.id === "card" ? "no-card" : ""}`}
+      className={`three-home-bottom layout-${rows} ${noSoftware && !s.suspended ? "no-card" : ""}`}
     >
       <div className="three-toolbar">
         <button
@@ -917,7 +928,7 @@ function ThreeScreen({
           <ThreeApplet name="browser" size={25} />
         </button>
       </div>
-      {rows === 1 && (
+      {rows === 1 && !empty && (
         <div className="three-title">
           {app.id === "card" ? (
             <span>
@@ -982,7 +993,7 @@ function ThreeScreen({
           ))}
         </div>
       </div>
-      <button
+      {s.selection >= rows && <button
         className="three-scroll-left"
         aria-label="Scroll software left"
         onClick={() =>
@@ -990,27 +1001,24 @@ function ThreeScreen({
         }
       >
         ‹
-      </button>
-      <button
+      </button>}
+      {s.selection + rows < apps.length && <button
         className="three-scroll-right"
         aria-label="Scroll software right"
         onClick={() =>
           dispatch({
             type: "select",
-            index: Math.min(APPS_3DS.length - 1, s.selection + rows),
+            index: s.selection + rows,
           })
         }
       >
         ›
-      </button>
+      </button>}
       <footer>
-        {app.id !== "card" && !s.suspended && (
+        {manualTopics[app.id] && (
           <button
             onClick={() =>
-              dispatch({
-                type: "dialog",
-                text: "Electronic Manual\nSelect a topic using the Touch Screen.",
-              })
+              dispatch({ type: "manual-open", app: app.id })
             }
           >
             Manual
@@ -1025,7 +1033,7 @@ function ThreeScreen({
             </button>
             <button onClick={() => dispatch({ type: "home" })}>Resume</button>
           </>
-        ) : app.id !== "card" ? (
+        ) : !noSoftware ? (
           <button onClick={() => dispatch({ type: "open", app: app.id })}>
             Open
           </button>
@@ -1039,7 +1047,7 @@ function ThreeScreen({
               <button
                 key={n}
                 aria-label={`Brightness ${n}`}
-                className={s.prefs.brightness === String(n) ? "chosen" : ""}
+                className={Number(s.prefs.brightness ?? THREE_DEFAULT_BRIGHTNESS) === n ? "chosen" : ""}
                 onClick={() =>
                   dispatch({ type: "set", key: "brightness", value: String(n) })
                 }
@@ -1173,6 +1181,15 @@ function PspScreen({
             ))}
           </div>
           <div className="xmb-selection-glow" />
+          {s.pspOptions && (
+            <div className="psp-options-shade" onClick={() => dispatch({ type: "psp-options" })}>
+              <div className="psp-options" role="dialog" aria-label="Options" onClick={(event) => event.stopPropagation()}>
+                <header>{cat.items[s.selection]}</header>
+                <button type="button" onClick={() => dispatch({ type: "psp-information" })}>Information</button>
+                <footer>× Enter　○ Back</footer>
+              </div>
+            </div>
+          )}
         </>
       ) : s.app.includes("Memory Stick") &&
         s.category >= 1 &&
@@ -1233,6 +1250,33 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
   const app = APPS_VITA.find((a) => a.id === s.app) || APPS_VITA[0];
   const resources = useSystemResources("vita");
   const swipe = useRef<{ x: number; y: number } | null>(null);
+  const cancelTap = useRef(false);
+  const pageGesture = {
+    onPointerDown: (event: PointerEvent<HTMLDivElement>) => {
+      if (!event.isPrimary || event.button !== 0) return;
+      cancelTap.current = false;
+      swipe.current = { x: event.clientX, y: event.clientY };
+      if (!(event.target as HTMLElement).closest("button,a"))
+        event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    onPointerUp: (event: PointerEvent<HTMLDivElement>) => {
+      if (!event.isPrimary || !swipe.current) return;
+      const dx = event.clientX - swipe.current.x;
+      const dy = event.clientY - swipe.current.y;
+      swipe.current = null;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) <= 36) return;
+      cancelTap.current = true;
+      if (Math.abs(dx) > Math.abs(dy)) dispatch({ type: "vita-shift", delta: dx < 0 ? 1 : -1 });
+      else if (s.phase === "home") dispatch({ type: "page", delta: dy < 0 ? 1 : -1 });
+    },
+    onPointerCancel: () => { swipe.current = null; },
+    onClickCapture: (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!cancelTap.current || event.detail === 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      cancelTap.current = false;
+    },
+  };
   const info = (
     <div className="vita-info">
       <span>
@@ -1323,6 +1367,7 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
       <div
         className="vita-live"
         style={{ "--app-color": app.color } as CSSProperties}
+        {...pageGesture}
       >
         {info}
         <header>
@@ -1403,15 +1448,7 @@ function VitaScreen({ state: s, dispatch, onPowerOff, volume }: Props) {
   return (
     <div
       className="vita-home"
-      onPointerDown={(e) => (swipe.current = { x: e.clientX, y: e.clientY })}
-      onPointerUp={(e) => {
-        if (swipe.current) {
-          const dy = e.clientY - swipe.current.y;
-          if (Math.abs(dy) > 45)
-            dispatch({ type: "page", delta: dy < 0 ? 1 : -1 });
-        }
-        swipe.current = null;
-      }}
+      {...pageGesture}
     >
       {info}
       <div className="vita-page-dots">

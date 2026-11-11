@@ -6,15 +6,19 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  Eraser,
   FileImage,
   Film,
   Folder,
   Globe,
   Image,
+  Keyboard,
   Mic,
   Music,
+  NotebookPen,
   Pause,
   Play,
+  Pencil,
   Plus,
   RefreshCw,
   Save,
@@ -32,6 +36,7 @@ import type { MediaItem } from "../storage/database";
 import { InkPad } from "./InkPad";
 import type { InkStroke } from "./InkPad";
 import { useAppButtons } from "./useAppButtons";
+import type { AppButtonEvent } from "./useAppButtons";
 import {
   useCamera,
   setCameraVideo,
@@ -958,74 +963,120 @@ export function Recorder(props: AppProps) {
   );
 }
 export function NotebookApp(props: AppProps) {
-  const page = Number(props.s.prefs["note-page"] || 0),
-    notes = json<{ text: string; strokes: InkStroke[] }[]>(
-      props.s.prefs.notes,
-      [],
-    ),
-    note = notes[page] || { text: "", strokes: [] };
+  const match = /^note-(\d+)$/.exec(props.s.section);
+  const page = match ? Number(match[1]) : -1;
+  const notes = json<({ text: string; strokes: InkStroke[] } | null)[]>(
+    props.s.prefs.notes,
+    [],
+  );
+  const note = notes[page] || { text: "", strokes: [] };
+  const root = useRef<HTMLDivElement>(null);
+  const clearDialog = useRef<HTMLDivElement>(null);
+  const [pen, setPen] = useState("#353a40");
+  const [typed, setTyped] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [message, setMessage] = useState("");
+  useAppButtons(root, props.s.device, !props.top && !confirmClear);
+  useAppButtons(clearDialog, props.s.device, !props.top && confirmClear);
+  useEffect(() => {
+    if (props.top || !confirmClear) return;
+    const cancel = (event: Event) => {
+      const { device, button } = (event as AppButtonEvent).detail;
+      if (device !== props.s.device || button !== "B") return;
+      setConfirmClear(false);
+      event.preventDefault();
+    };
+    window.addEventListener("pocketsp:app-button", cancel);
+    return () => window.removeEventListener("pocketsp:app-button", cancel);
+  }, [confirmClear, props.s.device, props.top]);
+  useEffect(() => {
+    setTyped(false);
+    setConfirmClear(false);
+    setMessage("");
+  }, [page]);
   const change = (delta: Partial<typeof note>) => {
     const next = [...notes];
     next[page] = { ...note, ...delta };
     pref(props, "notes", next);
   };
+  const saveImage = async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 640;
+    canvas.height = 424;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(canvas.width / 256, canvas.height / 110);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    for (const stroke of note.strokes) {
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = stroke.width;
+      ctx.stroke(new Path2D(stroke.d));
+    }
+    try {
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("The note image could not be created.");
+      await addMedia("3ds", blob, `Game Note ${page + 1}.png`);
+      setMessage("Saved to View Photos.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    }
+  };
   if (props.top)
     return (
-      <div className="notes-top">
+      <div className="three-notes-top">
+        <NotebookPen size={58} strokeWidth={1.6} aria-hidden="true" />
         <h2>Game Notes</h2>
-        <div>
-          {Array.from({ length: 16 }, (_, i) => (
-            <span key={i} className={i === page ? "chosen" : ""}>
-              {i + 1}
-              {notes[i]?.text ? " ✎" : ""}
-            </span>
+      </div>
+    );
+  const back = () => {
+    if (confirmClear) setConfirmClear(false);
+    else props.dispatch({ type: "back" });
+  };
+  if (page < 0)
+    return (
+      <div className="three-notes-index" ref={root}>
+        <div className="three-notes-grid">
+          {Array.from({ length: 16 }, (_, index) => (
+            <button type="button" key={index} aria-label={`Note ${index + 1}`} onClick={() => props.dispatch({ type: "section", name: `note-${index}` })}>
+              <svg viewBox="0 0 256 110" preserveAspectRatio="none" aria-hidden="true">
+                {notes[index]?.strokes.map((stroke, i) => (
+                  <path key={i} d={stroke.d} stroke={stroke.color} strokeWidth={stroke.width} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                ))}
+              </svg>
+              {notes[index]?.text && <span>{notes[index]?.text}</span>}
+            </button>
           ))}
         </div>
+        <footer><button type="button" onClick={back}>Ⓑ Close</button></footer>
       </div>
     );
   return (
-    <AppChrome
-      props={props}
-      title={`Game Notes　${page + 1}/16`}
-      theme="notes-app"
-    >
-      <label className="notes-page-picker">
-        Page{" "}
-        <select
-          aria-label="Game Notes page"
-          value={page}
-          onChange={(e) => pref(props, "note-page", e.target.value)}
-        >
-          {Array.from({ length: 16 }, (_, i) => (
-            <option key={i} value={i}>
-              {i + 1}
-            </option>
-          ))}
-        </select>
-      </label>
-      <textarea
-        aria-label="Game Notes text"
-        value={note.text}
-        onChange={(e) => change({ text: e.target.value })}
-      />
-      <InkPad
-        strokes={note.strokes}
-        onChange={(strokes) => change({ strokes })}
-      />
-      <div className="app-actions">
-        <button
-          onClick={() => pref(props, "note-page", String((page + 15) % 16))}
-        >
-          ◀
-        </button>
-        <button onClick={() => change({ text: "", strokes: [] })}>Clear</button>
-        <button
-          onClick={() => pref(props, "note-page", String((page + 1) % 16))}
-        >
-          ▶
-        </button>
-      </div>
-    </AppChrome>
+    <div className="three-notes-paper" ref={root}>
+      {typed ? <textarea aria-label="Game Notes text" value={note.text} onChange={(event) => change({ text: event.target.value })} />
+        : <InkPad strokes={note.strokes} onChange={(strokes) => change({ strokes })} color={pen} eraser={pen === "eraser"} />}
+      <footer>
+        <button type="button" aria-label="Save and back" onClick={back}><ChevronLeft size={17} /></button>
+        {([["Black pen", "#353a40"], ["Red pen", "#b52e33"], ["Blue pen", "#286ebc"]] as const).map(([label, color]) => (
+          <button type="button" key={color} title={label} aria-label={label} aria-pressed={pen === color} onClick={() => { setPen(color); setTyped(false); }}>
+            <Pencil size={15} color={color} />
+          </button>
+        ))}
+        <button type="button" title="Eraser" aria-label="Eraser" aria-pressed={pen === "eraser"} onClick={() => { setPen("eraser"); setTyped(false); }}><Eraser size={16} /></button>
+        <button type="button" title="Save as photo" aria-label="Save as photo" onClick={() => void saveImage()}><FileImage size={16} /></button>
+        <button type="button" title="Clear note" aria-label="Clear note" onClick={() => setConfirmClear(true)}><Trash2 size={16} /></button>
+        <button type="button" title="Typed note" aria-label="Typed note" aria-pressed={typed} onClick={() => setTyped(!typed)}><Keyboard size={16} /></button>
+      </footer>
+      {message && <div className="three-notes-message" role="status">{message}</div>}
+      {confirmClear && <div className="three-notes-overlay" ref={clearDialog} role="alertdialog" aria-label="Clear note">
+        <div><p>Clear this note?</p>
+          <button type="button" onClick={() => setConfirmClear(false)}>Cancel</button>
+          <button type="button" onClick={() => { change({ text: "", strokes: [] }); setConfirmClear(false); }}>Clear</button>
+        </div>
+      </div>}
+    </div>
   );
 }
 export function BrowserApp(props: AppProps) {

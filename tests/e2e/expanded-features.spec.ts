@@ -190,9 +190,10 @@ test("3DS Mii editor saves real features and notes survive HOME and a power cycl
   await physical(page, "Home");
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("button", { name: "Game Notes", exact: true }).click();
+  await page.getByRole("button", { name: "Note 1", exact: true }).click();
+  await page.getByRole("button", { name: "Typed note", exact: true }).click();
   await page.getByLabel("Game Notes text").fill("Remember this note");
   await physical(page, "Home");
-  await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.locator(".power-button").click();
   await page.reload();
   await boot(page, "3DS");
@@ -201,6 +202,8 @@ test("3DS Mii editor saves real features and notes survive HOME and a power cycl
   await physical(page, "Home");
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("button", { name: "Game Notes", exact: true }).click();
+  await page.getByRole("button", { name: "Note 1", exact: true }).click();
+  await page.getByRole("button", { name: "Typed note", exact: true }).click();
   await expect(page.getByLabel("Game Notes text")).toHaveValue(
     "Remember this note",
   );

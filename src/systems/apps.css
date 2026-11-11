@@ -415,45 +415,134 @@
   border: 1px solid #c2cbd0;
   background: white;
 }
-.notes-app main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.notes-app textarea {
-  height: 43px;
-  width: 100%;
-  resize: none;
-  font-size: 10px;
-}
-.notes-app .native-ink-pad {
-  min-height: 64px;
-  flex: 1;
-}
-.notes-app .app-actions {
-  margin: 0;
-}
-.notes-top {
+.three-notes-top {
   position: absolute;
   inset: 0;
-  background: #eef3e8;
-  padding: 15px;
-}
-.notes-top h2 {
-  font-size: 18px;
-  color: #7c8d3f;
-  margin-bottom: 10px;
-}
-.notes-top > div {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 7px;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  color: #829b24;
+  background: repeating-linear-gradient(#fff0 0 17px, #a3aa9220 17px 18px), linear-gradient(#f6f7ee, #dfe3d7);
 }
-.notes-top button {
-  height: 32px;
-  background: #fffef2;
-  border: 1px solid #c4ccb5;
+.three-notes-top h2 {
+  font-size: 21px;
+  margin: 0;
+}
+.three-notes-index,
+.three-notes-paper {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 28px;
+  color: #444844;
+  background: #d8dad7;
+}
+.three-notes-grid {
+  display: grid;
+  grid-template: repeat(4, minmax(0, 1fr)) / repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 5px;
+}
+.three-notes-grid button {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid #a7aaa5;
+  border-radius: 3px;
+  background: #fff;
+}
+.three-notes-grid svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.three-notes-grid span {
+  position: absolute;
+  inset: 3px 5px auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+.three-notes-paper .native-ink-pad,
+.three-notes-paper textarea {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+.three-notes-paper textarea {
+  resize: none;
+  padding: 7px;
+  background: white;
+}
+.three-notes-index footer,
+.three-notes-paper footer {
+  display: flex;
+  background: linear-gradient(#fbfcf9, #d0d3cd);
+  border-top: 1px solid #a7aaa5;
+}
+.three-notes-index footer button,
+.three-notes-paper footer button,
+.three-notes-overlay button {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-right: 1px solid #b1b5ae;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font-size: 11px;
+}
+.three-notes-paper footer button[aria-pressed="true"] {
+  background: #bdda46;
+}
+.three-notes-index footer button {
+  color: white;
+  background: linear-gradient(#686d6b, #353839);
+}
+.three-notes-grid button:focus-visible,
+.three-notes-paper button:focus-visible {
+  outline: 2px solid #0c9d92;
+  outline-offset: -2px;
+}
+.three-notes-message {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 90%;
+  padding: 4px 8px;
+  color: white;
+  background: #51483c;
   border-radius: 4px;
+  font-size: 10px;
+}
+.three-notes-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #0006;
+}
+.three-notes-overlay > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 65%;
+  background: #faf6e9;
+  border: 1px solid #a59a7e;
+  border-radius: 6px;
+}
+.three-notes-overlay p {
+  grid-column: 1 / -1;
+  margin: 16px 0;
+  text-align: center;
+}
+.three-notes-overlay button {
+  height: 26px;
+  border-top: 1px solid #c4b898;
 }
 .browser-app main {
   display: flex;

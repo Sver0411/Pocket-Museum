@@ -520,19 +520,19 @@
   filter: none;
 }
 
-/* Feedback stays above the dock so power, resume and cartridge actions stay legible. */
+/* Feedback stays out of the centre of the handheld. */
 .play-view .toast {
   top: 80px;
   bottom: auto;
+  left: auto;
+  right: 12px;
+  transform: none;
   pointer-events: none;
-  max-width: calc(100vw - 24px);
+  max-width: min(300px, calc(100vw - 24px));
 }
 @media (max-height: 600px) {
   .play-view .toast {
     top: 8px;
-    left: auto;
-    right: 12px;
-    transform: none;
     font-size: 10px;
   }
 }

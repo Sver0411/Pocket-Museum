@@ -26,9 +26,9 @@ export function NativeAppIcon({
       art = (
         <>
           <path d="M10 21 H22 L26 14 H40 L44 21 H54 V51 H10Z" fill="white" />
-          <circle cx="33" cy="35" r="12" fill="currentColor" />
+          <circle cx="33" cy="35" r="12" fill="var(--app-color, #ed8d24)" />
           <circle cx="33" cy="35" r="8" fill="white" />
-          <rect x="46" y="25" width="5" height="4" rx="1" fill="currentColor" />
+          <rect x="46" y="25" width="5" height="4" rx="1" fill="var(--app-color, #ed8d24)" />
         </>
       );
       break;
@@ -45,7 +45,7 @@ export function NativeAppIcon({
     case "mii":
       art = (
         <>
-          <g fill="white">
+          <g fill="#fff" stroke="#329063" strokeWidth="2" strokeLinejoin="round">
             <path d="M8 24 H14 L20 36 L26 24 H32 V48 H26 V33 L21 43 H18 L14 33 V48 H8Z" />
             <rect x="37" y="30" width="6" height="18" rx="1" />
             <rect x="49" y="30" width="6" height="18" rx="1" />
@@ -78,9 +78,9 @@ export function NativeAppIcon({
         <>
           <path
             d="M49 7 Q39 4 34 12 Q29 20 34 27 L12 49 Q8 54 13 58 Q17 61 21 56 L43 33 Q53 37 59 27 Q62 22 59 16 L48 24 L41 20 L40 14Z"
-            fill="white"
+            fill="currentColor"
           />
-          <circle cx="16" cy="54" r="2" fill="currentColor" />
+          <circle cx="16" cy="54" r="2" fill="#e7ebca" />
         </>
       );
       break;
@@ -118,11 +118,30 @@ export function NativeAppIcon({
     case "chart":
       art = (
         <>
-          <path d="M11 12 V53 H56" stroke="white" strokeWidth="4" fill="none" />
+          <path d="M11 12 V53 H56" stroke="currentColor" strokeWidth="4" fill="none" />
           <path
             d="M19 43 V33 H26 V43Z M32 43 V24 H39 V43Z M45 43 V16 H52 V43Z"
-            fill="white"
+            fill="currentColor"
           />
+        </>
+      );
+      break;
+    case "face":
+      art = (
+        <>
+          <rect x="8" y="8" width="48" height="48" rx="5" fill="#ffe236" />
+          <path d="M28 17h8v8h-8z" fill="#1689bc" />
+          <ellipse cx="32" cy="38" rx="16" ry="16" fill="#49c7f3" stroke="#116ab9" strokeWidth="3" />
+          <path d="M23 36h4m10 0h4M26 43q6 7 12 0" fill="none" stroke="#174e83" strokeWidth="3" strokeLinecap="round" />
+        </>
+      );
+      break;
+    case "bag":
+      art = (
+        <>
+          <path d="M16 21h32l4 32H12z" fill="#fff8d7" />
+          <path d="M24 25V18a8 8 0 0 1 16 0v7" fill="none" stroke="#fff8d7" strokeWidth="3" />
+          <path d="M20 27h24l3 22H17z" fill="#f39720" />
         </>
       );
       break;
